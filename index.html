@@ -402,6 +402,96 @@ body.menu .dBody>*:nth-child(3){animation-delay:.2s}body.menu .dBody>*:nth-child
 /* Confeti */
 .confetti{position:fixed;inset:0;z-index:3400;pointer-events:none;overflow:hidden}
 .confetti i{position:absolute;top:36%;width:var(--s);height:calc(var(--s)*1.5);border-radius:2px;animation:conf var(--d) cubic-bezier(.2,.7,.3,1) forwards}
+
+/* =========================================
+   PANEL COMPACTO Y TRANSPARENTE + OFERTA DE PRECIO
+========================================= */
+.sheet{background:rgba(255,255,255,.58);border-radius:26px 26px 0 0;padding:8px 16px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 30px rgba(0,0,0,.10);border-top:1px solid rgba(255,255,255,.7)}
+@supports(backdrop-filter:blur(10px)){.sheet{backdrop-filter:blur(14px) saturate(1.5);-webkit-backdrop-filter:blur(14px) saturate(1.5)}}
+.grab{width:40px;height:5px;margin:0 auto 10px}
+.hi{font-size:12px}
+.sheet h2{font-size:21px;letter-spacing:-.5px;margin:0 0 10px}
+.route{border-radius:18px;padding:2px 14px;background:rgba(247,247,250,.72)}
+.rr{min-height:46px;gap:12px}
+.rr .a,.rr input{font-size:15px}
+.rr small{font-size:10px;margin-bottom:0}
+.line{left:25px;top:30px;bottom:30px}
+.chips{margin-top:10px}
+.pill{padding:10px;font-size:14px;border-radius:16px}
+.btn{padding:14px;font-size:16px;border-radius:18px;margin-top:10px}
+.btn.ghost{padding:12px;font-size:15px;margin-top:8px}
+#sug{max-height:150px;margin-top:8px}
+#sug li{padding:8px 4px}
+.tar{margin-top:10px;padding:6px;font-size:12px;background:rgba(247,247,250,.72)}
+.bike{margin-top:10px;padding:10px 12px;border-radius:18px;gap:12px;background:rgba(255,255,255,.72)}
+.bike .bi{width:44px;height:44px;border-radius:14px}
+.bike .bi svg{width:26px;height:26px}
+.bike b{font-size:16px}
+.bike .p{font-size:22px}
+.stats{margin-top:8px;gap:8px}
+.stats div{padding:8px;border-radius:14px;background:rgba(247,247,250,.72)}
+.stats b{font-size:16px}
+.addr{font-size:14px;padding:2px 2px 0}
+.mini{padding:10px 14px;border-radius:14px;font-size:14px;background:rgba(247,247,250,.72)}
+.rad{width:76px;height:76px;margin:0 auto 10px}
+.rad .core{inset:17px}
+.rad .core svg{width:26px;height:26px}
+.srch{padding:4px 0}
+.srch h3{font-size:19px;margin-bottom:4px}
+.srch p{font-size:13px;margin-top:0}
+.bar{margin:10px 0}
+.okc{width:60px;height:60px;margin:0 auto 10px}
+.okc svg{width:30px;height:30px}
+.stars{font-size:38px;margin:10px 0}
+.drv{padding:8px 12px;border-radius:18px;background:rgba(247,247,250,.72)}
+.drv .pa{width:44px;height:44px;border-radius:15px;font-size:18px}
+.drv b{font-size:16px}
+.drv small{font-size:13px}
+.req{padding:14px;margin-top:10px;border-radius:18px;background:rgba(255,255,255,.78)}
+#chip{transition:top .3s,transform .2s,opacity .4s}
+
+.offer{display:flex;align-items:center;gap:10px;margin-top:8px;background:rgba(247,247,250,.72);border:1px solid #EAEAEF;border-radius:16px;padding:6px}
+.offer button{width:42px;height:42px;border-radius:13px;background:var(--tint);color:var(--redD);font-size:24px;font-weight:800;display:grid;place-items:center;flex:none;line-height:1}
+.offer button:active{transform:scale(.9)}
+.offer button[disabled]{opacity:.35;pointer-events:none}
+.offer>div{flex:1;text-align:center;min-width:0}
+.offer small{display:block;font-size:10px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
+.offer b{display:block;font-size:19px;font-weight:800;color:var(--red);font-variant-numeric:tabular-nums}
+.offer b.bump{animation:bump .5s cubic-bezier(.3,1.6,.5,1)}
+
+/* =========================================
+   AYUDA (SOPORTE), CÓDIGO DE SEGURIDAD Y CANCELACIÓN
+========================================= */
+.dBody{overflow-y:auto}
+.dItem .dBadge{margin-left:auto;min-width:22px;height:22px;border-radius:11px;background:var(--red);color:#fff;font-size:12px;font-weight:800;display:none;place-items:center;padding:0 6px}
+.pill.ghost2{background:rgba(242,242,247,.9);color:var(--ink)}
+
+.codeBox{margin-top:10px;background:rgba(255,255,255,.82);border:2px dashed var(--red);border-radius:18px;padding:8px 12px;text-align:center}
+.codeBox small{display:block;font-size:10px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
+.codeDigits{display:flex;justify-content:center;gap:8px;margin:5px 0}
+.codeDigits i{font-style:normal;width:40px;height:48px;border-radius:12px;background:var(--tint);color:var(--red);font-size:28px;font-weight:800;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+.codeBox span{display:block;font-size:12px;font-weight:600;color:var(--mut);line-height:1.35}
+
+.codeIn{margin:0 0 10px}
+.codeIn small{display:block;font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;text-align:center}
+.codeIn input{width:100%;text-align:center;letter-spacing:14px;font-size:26px;font-weight:800;border:2px solid var(--line);border-radius:16px;padding:8px 8px 8px 22px;background:rgba(247,247,250,.9);outline:0;color:var(--ink)}
+.codeIn input:focus{border-color:var(--red);background:#fff}
+.codeIn.bad input{border-color:var(--red);animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+
+#sup,#inbox{position:fixed;inset:0;background:var(--bg-app);display:none;flex-direction:column;animation:slideRight .4s cubic-bezier(.2,.8,.2,1) backwards}
+#inbox{z-index:2300}
+#sup{z-index:2350}
+#supMsgs{flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
+#supMsgs .m small,#msgs .m small{display:block;font-size:11px;opacity:.65;margin-top:4px;font-weight:600}
+.inRow{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:#fff;border-radius:20px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow-sm)}
+.inRow .pa{width:46px;height:46px;border-radius:16px;overflow:hidden;background:linear-gradient(135deg,var(--red2),var(--red));color:#fff;display:grid;place-items:center;font-weight:800;font-size:18px;flex:none}
+.inRow .pa img{width:100%;height:100%;object-fit:cover}
+.inRow .t{flex:1;min-width:0}
+.inRow b{display:block;font-size:16px;font-weight:800}
+.inRow small{display:block;color:var(--mut);font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inRow .dot{width:12px;height:12px;border-radius:50%;background:var(--red);flex:none}
+.inRow.un b{color:var(--red)}
 </style>
 </head>
 <body>
@@ -421,6 +511,8 @@ body.menu .dBody>*:nth-child(3){animation-delay:.2s}body.menu .dBody>*:nth-child
   <div class="dBody">
     <button class="switch" id="swBtn"><b id="swT">Pasar a modo conductor</b><span>Cambiar</span></button>
     <button class="dItem" id="walletItem" style="display:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 12h.01"/></svg> Billetera</button>
+    <button class="dItem" id="helpItem" style="display:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg> Ayuda<span class="dBadge" id="helpBadge"></span></button>
+    <button class="dItem" id="adminItem" style="display:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg> Bandeja de soporte<span class="dBadge" id="adminBadge"></span></button>
     <button class="dItem" id="prof"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Mi perfil</button>
     <button class="dItem" id="out"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Cerrar sesión</button>
   </div>
@@ -447,6 +539,7 @@ body.menu .dBody>*:nth-child(3){animation-delay:.2s}body.menu .dBody>*:nth-child
     <div class="addr" id="tA"></div>
     <div class="bike"><div class="bi"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="16.5" r="3"/><circle cx="18.5" cy="16.5" r="3"/><path d="M5.5 16.5l3-7h5l2 3 3 4M13.5 9.5l-1-3h-2M9 12.5h6"/></svg></div><div class="m"><b>Moto</b><small id="tRate">Tarifa por km</small></div><div class="p" id="tP">$0</div></div>
     <div class="stats"><div><b id="tK">0 km</b><small>Distancia</small></div><div><b id="tM">0 min</b><small>Duración</small></div></div>
+    <div class="offer"><button id="offM" aria-label="Bajar oferta">−</button><div><small>Tu oferta · sube para atraer conductores</small><b id="offV">$0</b></div><button id="offP" aria-label="Subir oferta">+</button></div>
     <button class="btn" id="req">Pedir moto</button><button class="btn ghost" id="chg">Cambiar destino</button>
   </div>
   <div id="s4" style="display:none">
@@ -455,12 +548,14 @@ body.menu .dBody>*:nth-child(3){animation-delay:.2s}body.menu .dBody>*:nth-child
       <h3>Buscando moto</h3><p id="s4p">Contactando conductores cercanos…</p>
       <div class="bar"><b></b></div>
       <div class="mini"><span id="s4k">0 km</span><span id="s4pr">$0</span><span id="s4tm">0:00</span></div>
+      <div class="offer"><button id="offM2" aria-label="Bajar oferta">−</button><div><small>Sube tu oferta para atraer conductores</small><b id="offV2">$0</b></div><button id="offP2" aria-label="Subir oferta">+</button></div>
     </div>
     <button class="btn ghost" id="cancel">Cancelar viaje</button>
   </div>
   <div id="s5" style="display:none">
     <div class="drv"><div class="pa" id="s5a"></div><div class="t"><b id="s5n">Conductor</b><small id="s5s">Va en camino a recogerte</small></div><button class="pill chatB" style="flex:none;padding:12px 16px;font-size:20px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.1-4.2A8 8 0 1 1 21 12z"/></svg><span class="badge"></span></button></div>
-    <div class="mini" style="margin-top:14px"><span id="s5k"></span><span id="s5pr"></span></div>
+    <div class="codeBox" id="s5code" style="display:none"><small>Tu código de seguridad</small><div class="codeDigits" id="s5digits"></div><span>Díselo al conductor al subir a la moto. Solo así podrá iniciar tu viaje.</span></div>
+    <div class="mini" style="margin-top:10px"><span id="s5k"></span><span id="s5pr"></span></div>
     <button class="btn ghost" id="cancel2">Cancelar viaje</button>
   </div>
   <div id="s6" style="display:none">
@@ -542,9 +637,10 @@ body.menu .dBody>*:nth-child(3){animation-delay:.2s}body.menu .dBody>*:nth-child
        Contactar soporte
     </button>
   </div>
-  <div class="wGrid"><div><small>Comisión que debes</small><b id="wCom" style="color:var(--red)">$0</b></div><div><small>Ganancias netas</small><b id="wNet">$0</b></div></div>
+  <div class="wGrid"><div><small>Deuda total</small><b id="wCom" style="color:var(--red)">$0</b></div><div><small>Ganancias netas</small><b id="wNet">$0</b></div></div>
+  <p class="note" id="wPenInfo" style="display:none;margin:12px 24px 0;color:var(--redD);font-weight:700"></p>
   <div class="wCard"><b>Ganado por día</b><div class="bars" id="wBars"></div></div>
-  <div class="wCard"><b>Viajes de la semana</b><div id="wList"></div><p class="note" style="color:var(--mut);font-size:14px;margin-top:14px;line-height:1.5;font-weight:500;">Por cada viaje se descuenta el 20% de comisión a Moto. Cobras el viaje en efectivo y le debes la comisión a la app.</p></div>
+  <div class="wCard"><b>Viajes de la semana</b><div id="wList"></div><div id="wPen"></div><p class="note" style="color:var(--mut);font-size:14px;margin-top:14px;line-height:1.5;font-weight:500;">Por cada viaje se descuenta el 20% de comisión a Moto. Cobras el viaje en efectivo y le debes la comisión a la app.</p></div>
 </div>
 
 <div id="chat">
@@ -552,6 +648,18 @@ body.menu .dBody>*:nth-child(3){animation-delay:.2s}body.menu .dBody>*:nth-child
   <div id="msgs"></div>
   <div class="qr" id="qr"></div>
   <div class="chI"><input id="chIn" placeholder="Escribe un mensaje" autocomplete="off"><button id="chSend" aria-label="Enviar"><svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M3 20l18-8L3 4v6l12 2-12 2z"/></svg></button></div>
+</div>
+
+<div id="inbox">
+  <div class="chH"><button id="inBack" aria-label="Volver" style="color:#fff;font-size:24px;padding:4px 8px;font-weight:bold;">←</button><div><b style="display:block;font-size:18px;font-weight:800;">Bandeja de soporte</b><small style="opacity:.9;font-size:13px;font-weight:600;">Mensajes de conductores</small></div></div>
+  <div id="inboxList" style="flex:1;overflow:auto;padding:16px"></div>
+</div>
+
+<div id="sup">
+  <div class="chH"><button id="supBack" aria-label="Volver" style="color:#fff;font-size:24px;padding:4px 8px;font-weight:bold;">←</button><div class="pa" id="supAv"></div><div><b id="supN" style="display:block;font-size:18px;font-weight:800;"></b><small id="supR" style="opacity:.9;font-size:13px;font-weight:600;"></small></div></div>
+  <div id="supMsgs"></div>
+  <div class="qr" id="supQr" style="display:none"></div>
+  <div class="chI"><input id="supIn" placeholder="Escribe tu mensaje" autocomplete="off" maxlength="1000"><button id="supSend" aria-label="Enviar"><svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M3 20l18-8L3 4v6l12 2-12 2z"/></svg></button></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js"></script>
@@ -746,7 +854,10 @@ let pRide=null,pLegA=null,pLegB=null,pNotified=false,ratingRide=null,accepting=f
 let chans=[],pollT=null,feedCh=null,feedT=null,feedBusy=false,lastPub=0,tripsCache=[],debt={COP:0,USD:0};
 const declined=new Set(),inflight=new Set(),profCache={};
 const rideTxt=r=>money(+r.fare,r.currency)+' '+r.currency;
-const debtNow=()=>debt[TARIFF[cc].cur]||0;
+let penDebt={COP:0,USD:0},pens=[];
+const debtOf=cur=>(debt[cur]||0)+(penDebt[cur]||0);
+const debtNow=()=>debtOf(TARIFF[cc].cur);
+const fnMissing=e=>!!e&&(e.code==='PGRST202'||/could not find the function|schema cache/i.test(e.message||''));
 const rpcErr=e=>{const m=(e&&e.message)||'';if(/RIDE_TAKEN/.test(m))return'TAKEN';if(/DEBT_LIMIT/.test(m))return'DEBT';if(/RIDE_NOT_FOUND/.test(m))return'GONE';if(/NOT_ALLOWED|INVALID_TRANSITION/.test(m))return'NA';return'ERR'};
 
 async function getProf(id){
@@ -774,12 +885,14 @@ async function loadFinance(){
   if(!sb||!user)return;
   try{
     const ws=new Date(weekStart()).toISOString();
-    const[t,b]=await Promise.all([
+    const[t,b,pn]=await Promise.all([
       sb.from('rides').select('id,label,fare,currency,commission,finished_at').eq('driver_id',user.id).eq('status','done').gte('finished_at',ws).order('finished_at'),
-      sb.from('driver_balance').select('currency,debt').eq('driver_id',user.id)
+      sb.from('driver_balance').select('currency,debt').eq('driver_id',user.id),
+      sb.from('penalties').select('id,ride_id,amount,currency,role,created_at').eq('user_id',user.id).eq('role','driver').eq('paid',false)
     ]);
     if(!t.error)tripsCache=(t.data||[]).map(x=>({id:x.id,ts:Date.parse(x.finished_at),label:x.label,name:'',fare:+x.fare,cur:x.currency,com:+x.commission}));
     if(!b.error){debt={COP:0,USD:0};(b.data||[]).forEach(x=>{debt[x.currency]=+x.debt})}
+    if(!pn.error){pens=pn.data||[];penDebt={COP:0,USD:0};pens.forEach(x=>{penDebt[x.currency]=(penDebt[x.currency]||0)+ +x.amount})}
   }catch(e){}
   updateChip();
 }
@@ -837,7 +950,16 @@ const nearMe=r=>!me||hav(me,{lat:r.from_lat,lng:r.from_lng})<=RADIUS_KM*1000;
 async function feedRow(row){
   const id=row.id,fresh=Date.now()-Date.parse(row.created_at)<600000;
   if(row.status==='searching'&&fresh&&nearMe(row)&&row.passenger_id!==user.id&&!declined.has(id)){
-    if(pending[id]||inflight.has(id))return;
+    if(pending[id]){
+      const f=+row.fare;
+      if(f!==pending[id].fare){
+        const up=f>pending[id].fare;pending[id].fare=f;pending[id].price=rideTxt(row);
+        if(up&&!myJob&&navigator.vibrate)navigator.vibrate(200);
+        if(previewing&&previewing.id===id)previewReq(pending[id]);else renderReqs();
+      }
+      return;
+    }
+    if(inflight.has(id))return;
     inflight.add(id);
     try{
       const r=await reqFromRow(row);
@@ -940,7 +1062,7 @@ function closeGate(){$('gate').style.display='none';$('gIc').innerHTML='<svg wid
 async function after(){
   await mapReady;$('reg').style.display='none';
   $('dN').textContent=user.name;$('dP').textContent=user.phone;applyAvatar();$('hi').textContent='Hola, '+user.name.split(' ')[0];
-  fit();syncProfile().then(resumeRide);let st='prompt';
+  fit();syncProfile().then(resumeRide);initSupport();let st='prompt';
   try{st=(await navigator.permissions.query({name:'geolocation'})).state}catch(e){}
   if(st==='granted')locate();else gate('Activa tu ubicación','Usamos tu ubicación exacta y en tiempo real para el viaje.','Activar ubicación',locate);
 }
@@ -961,9 +1083,18 @@ function onFix(p,first){
   else glide(meM,[me.lng,me.lat],900);
   if(radar)radar.setLngLat([me.lng,me.lat]);
   map.getSource('acc').setData(circle(me,Math.max(c.accuracy,5)));
-  $('chip').style.display='flex';updateChip();if(myJob)driverTick();
+  if(mode==='d')$('chip').style.display='flex';else if(first)flashChip();
+  updateChip();if(myJob)driverTick();
   if(first)map.jumpTo({center:[me.lng,me.lat],zoom:17});
   if(!lastGeo||hav(lastGeo,me)>60){lastGeo={...me};rev(me,true).then(a=>{$('fromA').textContent=a;applyCC()})}
+}
+/* Chip de ubicación exacta: se muestra y desaparece a los 4 s (en modo pasajero) */
+let chipT=null,chipT2=null;
+function flashChip(){
+  if(mode!=='p')return;const c=$('chip');
+  clearTimeout(chipT);clearTimeout(chipT2);
+  c.style.display='flex';c.style.opacity='1';
+  chipT=setTimeout(()=>{c.style.opacity='0';chipT2=setTimeout(()=>{if(mode==='p')c.style.display='none';c.style.opacity='1'},400)},4000);
 }
 $('locBtn').onclick=()=>{if(me)map.flyTo({center:[me.lng,me.lat],zoom:17});else locate()};
 
@@ -1059,7 +1190,7 @@ async function go(p,label){
   kmM=new maplibregl.Marker({element:mk(lbl,'kmP'),anchor:'center'}).setLngLat(m).addTo(map);
   const b=new maplibregl.LngLatBounds();coords.forEach(c=>b.extend(c));b.extend([me.lng,me.lat]);
   map.fitBounds(b,{padding:{top:100,left:50,right:50,bottom:Math.round(innerHeight*.5)},duration:900,maxZoom:17});
-  $('tA').innerHTML=PIN_SM;$('tA').appendChild(document.createTextNode(' '+label));$('tK').textContent=lbl;$('tM').textContent=Math.max(2,Math.round(min))+' min';trip={p,label,km,min,coords};showPrice();
+  $('tA').innerHTML=PIN_SM;$('tA').appendChild(document.createTextNode(' '+label));$('tK').textContent=lbl;$('tM').textContent=Math.max(2,Math.round(min))+' min';offer=null;trip={p,label,km,min,coords};showPrice();
   sw('s3');
 }
 function clearRoute(){if(map&&map.getSource('route'))map.getSource('route').setData(EMPTY);[destM,kmM,pickM].forEach(x=>x&&x.remove());destM=kmM=pickM=null;legA=legB=null}
@@ -1079,7 +1210,42 @@ function applyCC(){
   else if(lastCC){if(!ccSet)setCountry('CO');if(!warned){warned=true;toast('Aún no operamos en tu país. Mostramos tarifas de Colombia.')}}
   else if(!ccSet&&me)setCountry(me.lng>-67.5?'VE':'CO');
 }
-function showPrice(){$('tP').innerHTML=money(fare(trip.km))+'<small>'+TARIFF[cc].cur+'</small>';$('tRate').textContent=TARIFF[cc].name+' · '+money(TARIFF[cc].rate)+'/km';const tp=$('tP');tp.classList.remove('bump');void tp.offsetWidth;tp.classList.add('bump')}
+let offer=null;const STEP={COP:500,USD:0.25};
+const curFare=()=>{const b=fare(trip.km);if(offer==null||offer<b)offer=null;return offer==null?b:offer};
+function showPrice(){const cur=TARIFF[cc].cur,f=curFare(),b=fare(trip.km);$('offV').textContent=money(f)+' '+cur;$('offM').disabled=f<=b;$('offP').disabled=f>=rnd(b*3,cur);$('tP').innerHTML=money(f)+'<small>'+cur+'</small>';$('tRate').textContent=TARIFF[cc].name+' · '+money(TARIFF[cc].rate)+'/km';const tp=$('tP');tp.classList.remove('bump');void tp.offsetWidth;tp.classList.add('bump')}
+
+/* ---------- Oferta de precio (pasajero) ---------- */
+function bumpOffer(dir){
+  if(!trip)return;const cur=TARIFF[cc].cur,b=fare(trip.km);
+  let v=rnd(curFare()+dir*STEP[cur],cur);v=Math.max(b,Math.min(v,rnd(b*3,cur)));
+  offer=v;showPrice();const e=$('offV');e.classList.remove('bump');void e.offsetWidth;e.classList.add('bump');
+}
+$('offM').onclick=()=>bumpOffer(-1);$('offP').onclick=()=>bumpOffer(1);
+function setOfferSearch(){
+  if(!pRide)return;const f=+pRide.fare,cur=pRide.currency,b=trip?fare(trip.km):f;
+  const e=$('offV2');e.textContent=money(f,cur)+' '+cur;e.classList.remove('bump');void e.offsetWidth;e.classList.add('bump');
+  $('s4pr').textContent=rideTxt(pRide);
+  $('offM2').disabled=f<=b;$('offP2').disabled=f>=rnd(b*3,cur);
+}
+let raising=false;
+async function raiseRide(dir){
+  if(raising||!pRide||!sb||pRide.status!=='searching')return;
+  const cur=pRide.currency,f=+pRide.fare,b=trip?fare(trip.km):f;
+  let nf=rnd(f+dir*STEP[cur],cur);nf=Math.max(b,Math.min(nf,rnd(b*3,cur)));
+  if(nf===f)return;
+  raising=true;let err=null;
+  const r1=await sb.rpc('update_ride_fare',{p_ride:pRide.id,p_fare:nf});
+  if(r1.error){
+    const r2=await sb.from('rides').update({fare:nf}).eq('id',pRide.id).eq('status','searching').select().maybeSingle();
+    err=r2.error||(!r2.data?{message:'sin filas'}:null);
+  }
+  raising=false;
+  if(err){toast('No pudimos actualizar la oferta. Intenta de nuevo.');return}
+  pRide={...pRide,fare:nf};if(trip)offer=nf;setOfferSearch();
+  if(navigator.vibrate)navigator.vibrate(60);
+  if(dir>0)toast('Oferta subida a '+rideTxt(pRide));
+}
+$('offM2').onclick=()=>raiseRide(-1);$('offP2').onclick=()=>raiseRide(1);
 
 /* ---------- Pedir Moto ---------- */
 let reqId=null,sT=null,radar=null,armT=null,myJob=null;
@@ -1088,9 +1254,21 @@ $('req').onclick=()=>{
   if(!trip)return;const b=$('req');b.classList.add('sending');b.innerHTML='<span class="spin"></span>Enviando solicitud…';
   setTimeout(()=>{b.classList.remove('sending');b.textContent='Pedir moto';startSearch()},750);
 };
+/* Pasajero con cobro pendiente por cancelar en viaje: no puede pedir hasta pagarlo */
+async function passengerBlocked(){
+  try{
+    const{data,error}=await sb.from('penalties').select('amount,currency').eq('user_id',user.id).eq('role','passenger').eq('paid',false);
+    if(error||!data||!data.length)return false;
+    const tot={};data.forEach(x=>{tot[x.currency]=(tot[x.currency]||0)+ +x.amount});
+    const txt=Object.keys(tot).map(c=>money(tot[c],c)+' '+c).join(' + ');
+    gate('Tienes un cobro pendiente','Cancelaste un viaje con la moto en curso y se te cobró '+txt+' (60% del viaje). Págalo con soporte para volver a pedir motos.','Contactar soporte',()=>{closeGate();window.open('https://wa.me/573102722613','_blank')});
+    return true;
+  }catch(e){return false}
+}
 async function startSearch(){
   if(!sb||!user)return;
-  const row={passenger_id:user.id,status:'searching',from_lat:me.lat,from_lng:me.lng,to_lat:trip.p.lat,to_lng:trip.p.lng,label:trip.label,km:Math.max(0.01,+trip.km.toFixed(2)),currency:TARIFF[cc].cur,fare:Math.max(0.01,fare(trip.km))};
+  if(await passengerBlocked())return;
+  const row={passenger_id:user.id,status:'searching',from_lat:me.lat,from_lng:me.lng,to_lat:trip.p.lat,to_lng:trip.p.lng,label:trip.label,km:Math.max(0.01,+trip.km.toFixed(2)),currency:TARIFF[cc].cur,fare:Math.max(0.01,curFare())};
   const{data,error}=await sb.from('rides').insert(row).select().single();
   if(error){
     if(error.code==='23505'){const a=await myActiveRide();if(a){toast('Ya tenías un viaje activo. Lo retomamos.');resumePassenger(a);return}}
@@ -1103,23 +1281,63 @@ async function startSearch(){
 function searchUI(){
   stopSearch();
   const o=me||(pRide?{lat:pRide.from_lat,lng:pRide.from_lng}:null);
-  $('s4k').textContent=(pRide?+pRide.km:0).toFixed(1)+' km';$('s4pr').textContent=pRide?rideTxt(pRide):'';$('s4tm').textContent='0:00';$('s4p').textContent=MSG[0];
+  $('s4k').textContent=(pRide?+pRide.km:0).toFixed(1)+' km';$('s4pr').textContent=pRide?rideTxt(pRide):'';setOfferSearch();$('s4tm').textContent='0:00';$('s4p').textContent=MSG[0];
   if(o)radar=new maplibregl.Marker({element:mk('<i></i><i></i><i></i>','rdM'),anchor:'center'}).setLngLat([o.lng,o.lat]).addTo(map);
   const t0=Date.now();sT=setInterval(()=>{const x=Math.floor((Date.now()-t0)/1000);$('s4tm').textContent=Math.floor(x/60)+':'+String(x%60).padStart(2,'0');$('s4p').textContent=MSG[Math.floor(x/6)%MSG.length]},1000);
   sw('s4');
 }
 function stopSearch(){clearInterval(sT);sT=null;if(radar){radar.remove();radar=null}}
-function cancelNow(){
+function cancelLocal(){
   const id=reqId;stopSearch();unsubAll();reqId=null;pRide=null;pLegA=pLegB=null;
-  if(id&&sb)sb.rpc('cancel_ride',{p_ride:id}).then(({error})=>{if(error)toast('No pudimos cancelar en el servidor')});
   if(drvM){drvM.remove();drvM=null}closeChat();chatMsgs=[];
+  return id;
+}
+function cancelNow(){
+  const id=cancelLocal();
+  if(id&&sb)sb.rpc('cancel_ride',{p_ride:id}).then(({error})=>{if(error)toast('No pudimos cancelar en el servidor')});
+}
+/* Botón de cancelar del pasajero: gratis antes de subir; con cobro del 60% una vez en la moto */
+function setCancelLabel(){
+  const b=$('cancel2'),st=pRide&&pRide.status;if(!b)return;
+  delete b.dataset.arm;b.disabled=false;b.style.display=st==='pay'?'none':'block';
+  b.textContent=st==='trip'?'Cancelar viaje (cobro del 60%)':'Cancelar viaje';
+}
+function cancelTripPenalty(btn){
+  if(!pRide)return;const cur=pRide.currency,pen=money(rnd(+pRide.fare*.6,cur),cur);
+  if(!btn.dataset.arm){btn.dataset.arm=1;btn.textContent='Toca de nuevo · se te cobrarán '+pen;clearTimeout(armT);armT=setTimeout(setCancelLabel,4000);return}
+  clearTimeout(armT);delete btn.dataset.arm;btn.disabled=true;
+  const id=reqId,fareNow=+pRide.fare;
+  sb.rpc('cancel_ride_trip',{p_ride:id}).then(({data,error})=>{
+    btn.disabled=false;
+    if(error){toast(rpcErr(error)==='NA'?'El viaje ya cambió de estado':fnMissing(error)?'Falta instalar el SQL de cancelaciones en Supabase':'No pudimos cancelar. Intenta de nuevo.');setCancelLabel();return}
+    const amt=money(+(data&&data.penalty!=null?data.penalty:rnd(fareNow*.6,cur)),cur);
+    cancelLocal();clearRoute();dest=null;trip=null;sw('s1');if(me)map.flyTo({center:[me.lng,me.lat],zoom:17});
+    toast('Viaje cancelado · Se te cobrarán '+amt+' (60%)');
+  });
+}
+function onCancelledByOther(hadDriver){
+  cancelLocal();clearRoute();dest=null;trip=null;sw('s1');if(me)map.flyTo({center:[me.lng,me.lat],zoom:17});
+  toast(hadDriver?'El conductor canceló el viaje. No se te cobró nada.':'Tu solicitud expiró. Intenta de nuevo.');
+}
+/* Código de seguridad: solo lo ve el pasajero mientras espera a su conductor */
+async function showCode(r){
+  const box=$('s5code');box.style.display='none';
+  if(r.status!=='pickup')return;
+  try{
+    const{data,error}=await sb.from('ride_codes').select('code').eq('ride_id',r.id).maybeSingle();
+    if(error||!data||!data.code)return;
+    if(!pRide||pRide.id!==r.id||pRide.status!=='pickup')return;
+    const dg=$('s5digits');dg.innerHTML='';String(data.code).split('').forEach(c=>dg.appendChild(E('i',null,c)));
+    box.style.display='block';fit();
+  }catch(e){}
 }
 function cancelTrip(btn){
   if(!btn.dataset.arm){btn.dataset.arm=1;btn.textContent='Toca de nuevo para cancelar';clearTimeout(armT);armT=setTimeout(()=>{delete btn.dataset.arm;btn.textContent='Cancelar viaje'},3000);return}
   delete btn.dataset.arm;clearTimeout(armT);btn.textContent='Cancelar viaje';
   cancelNow();if(trip)sw('s3');else{clearRoute();sw('s1')}toast('Viaje cancelado');
 }
-$('cancel').onclick=()=>cancelTrip($('cancel'));$('cancel2').onclick=()=>cancelTrip($('cancel2'));
+$('cancel').onclick=()=>cancelTrip($('cancel'));
+$('cancel2').onclick=()=>{if(pRide&&pRide.status==='trip')cancelTripPenalty($('cancel2'));else cancelTrip($('cancel2'))};
 
 /* ---------- Iconos ---------- */
 const E=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
@@ -1217,6 +1435,7 @@ async function acceptReq(r){
       if(previewing&&previewing.id===r.id)closePreview();else renderReqs();
       return;
     }
+    try{const{data:rr}=await sb.from('rides').select('fare,currency').eq('id',r.id).maybeSingle();if(rr){r.fare=+rr.fare;r.price=rideTxt(rr)}}catch(e){}
     myJob={...r,phase:'pickup'};delete pending[r.id];chatMsgs=[];unread=0;chatWith={name:r.name,photo:r.photo};lastPub=0;
     previewing=null;prevPlan=null;$('sD').classList.remove('prev');$('sD').classList.add('job');
     legA=p.a;legB=p.b;drawLegs();legMarkers(r,p);renderJob();fitLegs();driverTick();
@@ -1227,7 +1446,11 @@ async function acceptReq(r){
 }
 function driverRideChanged(row){
   if(!myJob||row.id!==myJob.id)return;
-  if(row.status==='cancelled'){abortJob();toast('El pasajero canceló el viaje')}
+  if(row.status==='cancelled'){
+    if(row.cancelled_by===user.id)return;
+    const wasTrip=myJob.phase==='trip';abortJob();
+    toast(wasTrip?'El pasajero canceló con el viaje en curso. Se le cobra el 60%.':'El pasajero canceló el viaje');
+  }
 }
 
 function renderJob(){
@@ -1248,32 +1471,72 @@ function renderJob(){
     setAv(pa,null,j.name);t.append(E('b',null,j.name),E('small',null,pk?'Ve a recoger al pasajero':'Lleva al pasajero a su destino'));t.lastChild.id='jS';
     cb.style.cssText='flex:none;padding:12px 15px';cb.appendChild(E('span','badge'));d.append(pa,t,cb);
     const m=E('div','mini');m.style.margin='10px 0';const inf=E('span',null,'Calculando…');inf.id='jInfo';const pr=E('b','pr',j.price);pr.style.color='var(--red)';m.append(inf,pr);
-    const nx=E('button','btn',pk?'Recogí al pasajero':'Llegué al destino');nx.id='jNext';nx.style.marginTop='0';
+    const nx=E('button','btn',pk?'Verificar código e iniciar viaje':'Llegué al destino');nx.id='jNext';nx.style.marginTop='0';
+    let codeWrap=null,codeInp=null;
+    if(pk){
+      codeWrap=E('div','codeIn');
+      codeInp=E('input');codeInp.type='text';codeInp.inputMode='numeric';codeInp.maxLength=4;codeInp.placeholder='••••';codeInp.autocomplete='one-time-code';codeInp.setAttribute('aria-label','Código de seguridad del pasajero');
+      codeInp.oninput=()=>{codeInp.value=codeInp.value.replace(/\D/g,'').slice(0,4);nx.disabled=codeInp.value.length<4;codeWrap.classList.remove('bad')};
+      nx.disabled=true;codeWrap.append(E('small',null,'Pídele al pasajero su código de 4 dígitos'),codeInp);
+    }
     
     nx.onclick=async()=>{
       if(nx.disabled)return;nx.disabled=true;
       const nxt=myJob.phase==='pickup'?'trip':'pay';
-      const{error}=await sb.rpc('set_ride_phase',{p_ride:j.id,p_phase:nxt});
-      if(error){nx.disabled=false;toast(rpcErr(error)==='NA'?'El viaje ya cambió de estado':'No pudimos actualizar el viaje. Intenta de nuevo.');return}
+      let error=null;
+      if(nxt==='trip'){
+        const r=await sb.rpc('start_ride_with_code',{p_ride:j.id,p_code:codeInp?codeInp.value:''});
+        error=r.error;
+        if(!error&&r.data!=='OK'){
+          nx.disabled=false;
+          if(r.data==='LOCKED')toast('Demasiados intentos fallidos. Contacta a soporte desde Ayuda.');
+          else{toast('Código incorrecto. Pídeselo de nuevo al pasajero.');if(codeWrap){codeWrap.classList.remove('bad');void codeWrap.offsetWidth;codeWrap.classList.add('bad');codeInp.select()}}
+          if(navigator.vibrate)navigator.vibrate([120,60,120]);
+          return;
+        }
+      }else{
+        ({error}=await sb.rpc('set_ride_phase',{p_ride:j.id,p_phase:nxt}));
+      }
+      if(error){nx.disabled=false;toast(rpcErr(error)==='NA'?'El viaje ya cambió de estado':fnMissing(error)?'Falta instalar el SQL de códigos de seguridad en Supabase':'No pudimos actualizar el viaje. Intenta de nuevo.');return}
       if(nxt==='trip'){myJob.phase='trip';legA=null;drawLegs();lastPub=0;renderJob();fitLegs();driverTick();$('sD').classList.add('minimized')}
       else{myJob.phase='pay';$('navBtn').style.display='none';renderJob();if(navigator.vibrate)navigator.vibrate(200)}
     };
 
-    const ch=E('div','chips'),cn=E('button','pill ghost2','Cancelar viaje');
-    cn.onclick=()=>{if(!cn.dataset.arm){cn.dataset.arm=1;cn.textContent='Toca de nuevo';setTimeout(()=>{delete cn.dataset.arm;cn.textContent='Cancelar viaje'},3000);return}
+    const trp=!pk,penTxt=money(rnd(j.fare*.6,j.cur),j.cur),baseTxt=trp?'Cancelar viaje (cobro del 60%)':'Cancelar viaje';
+    const ch=E('div','chips'),cn=E('button','pill ghost2',baseTxt);
+    cn.onclick=()=>{
+      if(!cn.dataset.arm){cn.dataset.arm=1;cn.textContent=trp?'Toca de nuevo · se te cobrarán '+penTxt:'Toca de nuevo';setTimeout(()=>{delete cn.dataset.arm;cn.textContent=baseTxt},3500);return}
+      if(trp){driverCancelTrip(cn);return}
       declined.add(j.id);sb.rpc('cancel_ride',{p_ride:j.id}).then(()=>{abortJob();toast('Viaje cancelado')})};
-    ch.append(cn);c.append(d,m,nx,ch);
+    ch.append(cn);c.append(d,m);if(codeWrap)c.append(codeWrap);c.append(nx,ch);
   }
   $('rq').innerHTML='';$('rq').appendChild(c);setBadges();fit();
 }
 
+function forceOffline(){
+  online=false;stopFeed();
+  $('dp').classList.remove('on');$('dS').textContent='Desconectado';$('on').textContent='Conectarme';
+  pending={};$('rq').innerHTML='';renderReqs();
+  toast('Te hemos desconectado por límite de deuda.');
+}
+/* Conductor cancela con el pasajero a bordo: se le cobra el 60% en su billetera */
+async function driverCancelTrip(cn){
+  const j=myJob;if(!j||j.phase!=='trip')return;cn.disabled=true;
+  const{data,error}=await sb.rpc('cancel_ride_trip',{p_ride:j.id});
+  if(error){cn.disabled=false;toast(rpcErr(error)==='NA'?'El viaje ya cambió de estado':fnMissing(error)?'Falta instalar el SQL de cancelaciones en Supabase':'No pudimos cancelar. Intenta de nuevo.');return}
+  const pen=+(data&&data.penalty!=null?data.penalty:rnd(j.fare*.6,j.cur));
+  penDebt[j.cur]=(penDebt[j.cur]||0)+pen;declined.add(j.id);
+  abortJob();updateChip();
+  toast('Viaje cancelado · Se te cobró '+money(pen,j.cur)+' (60%) en tu billetera');
+  loadFinance().then(()=>{if(online&&debtOf(j.cur)>=LIMIT[j.cur])forceOffline()});
+}
 function driverTick(){
   const j=myJob;if(!j||!me)return;
   if(j.phase==='pickup'&&legA)legA=trim(legA,me);else if(j.phase==='trip'&&legB)legB=trim(legB,me);
   drawLegs();const tg=j.phase==='pickup'?j.from:j.to,d=hav(me,tg);
   if($('jInfo'))$('jInfo').textContent=(j.phase==='pickup'?'Recogida a ':'Destino a ')+kmTxt(d);
   if($('jNext'))$('jNext').classList.toggle('near',d<60);
-  if(d<60&&j.nearPh!==j.phase){j.nearPh=j.phase;toast(j.phase==='pickup'?'Llegaste al punto de recogida':'Llegaste al destino');if(navigator.vibrate)navigator.vibrate(300);if(j.phase==='trip'){$('sD').classList.remove('minimized')}}
+  if(d<60&&j.nearPh!==j.phase){j.nearPh=j.phase;toast(j.phase==='pickup'?'Llegaste al punto de recogida':'Llegaste al destino');if(navigator.vibrate)navigator.vibrate(300);$('sD').classList.remove('minimized');}
   publishLoc(j,d);
   if(Date.now()-lastDrag>8000)map.easeTo({center:[me.lng,me.lat],duration:700});
 }
@@ -1293,7 +1556,7 @@ async function finishJob(){
   abortJob();updateChip();
   toast('Viaje completado · Ganaste '+money(j.fare-com,j.cur));
   loadFinance();
-  if(debt[j.cur]>=LIMIT[j.cur]&&online){
+  if(debtOf(j.cur)>=LIMIT[j.cur]&&online){
     online=false;stopFeed();
     $('dp').classList.remove('on');$('dS').textContent='Desconectado';$('on').textContent='Conectarme';
     pending={};$('rq').innerHTML='';renderReqs();
@@ -1328,6 +1591,14 @@ function renderWallet(){
 
   const per=Array(7).fill(0);w.all.forEach(t=>per[(new Date(t.ts).getDay()+6)%7]+=t.fare);const mx=Math.max(...per,1),B=$('wBars');B.innerHTML='';
   ['L','M','M','J','V','S','D'].forEach((n,i)=>{const d=E('div'),b=E('i');b.style.height=Math.max(4,per[i]/mx*72)+'px';b.style.animationDelay=(i*60)+'ms';d.append(b,E('span',null,n));B.appendChild(d)});
+  const PN=$('wPen');PN.innerHTML='';const myPens=pens.filter(x=>x.currency===cur);
+  if(myPens.length){
+    const h=E('b',null,'Cobros por cancelación (pendientes)');h.style.cssText='display:block;margin-top:14px';PN.appendChild(h);
+    myPens.forEach(x=>{const r=E('div','tr'),l=E('div'),rr=E('div');rr.style.textAlign='right';
+      l.append(E('b',null,'Cancelación en viaje'),E('small',null,new Date(x.created_at).toLocaleString('es',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})));
+      rr.append(E('b',null,money(+x.amount,cur)),E('small','neg','60% del viaje'));r.append(l,rr);PN.appendChild(r)});
+  }
+  const pi=$('wPenInfo'),pd=penDebt[cur]||0;pi.style.display=pd>0?'block':'none';pi.textContent=pd>0?'Tu deuda incluye '+money(pd,cur)+' por cancelaciones en viaje.':'';
   const L=$('wList');L.innerHTML='';if(!w.n)L.appendChild(E('p','empty','Aún no tienes viajes esta semana.'));
   w.all.slice().reverse().forEach(t=>{const r=E('div','tr'),l=E('div'),rr=E('div');rr.style.textAlign='right';
     l.append(E('b',null,t.label.split(', ')[0]),E('small',null,new Date(t.ts).toLocaleString('es',{weekday:'short',hour:'2-digit',minute:'2-digit'})));
@@ -1362,7 +1633,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.chatB'))openChat()})
 /* ----- Pasajero: estados en vivo (viene de Supabase) ----- */
 function applyPassengerRide(r){
   if(!r||r.id!==reqId)return;
-  const prev=pRide;pRide=r;
+  const prev=pRide;pRide=r;if(r.status==='searching')setOfferSearch();
   if(r.status==='searching'){
     if(prev&&prev.driver_id){
       if(drvM){drvM.remove();drvM=null}closeChat();chatMsgs=[];pLegA=pLegB=null;
@@ -1371,9 +1642,13 @@ function applyPassengerRide(r){
   }else if(r.status==='pickup'||r.status==='trip'||r.status==='pay'){
     if(!prev||!prev.driver_id)onAccepted(r);
     else if(prev.status!==r.status){
-      if(r.status==='trip')$('s5s').textContent='En viaje hacia tu destino';
+      if(r.status==='trip'){$('s5s').textContent='En viaje hacia tu destino';$('s5code').style.display='none'}
       if(r.status==='pay')$('s5s').textContent='Llegaste. Paga el viaje en efectivo al conductor';
+      setCancelLabel();
     }
+  }else if(r.status==='cancelled'){
+    if(r.cancelled_by===user.id)return;
+    onCancelledByOther(!!(prev&&prev.driver_id));
   }else if(r.status==='done'){
     onDone(r);
   }
@@ -1384,7 +1659,7 @@ async function onAccepted(r){
   setAv($('s5a'),d.photo,d.name);$('s5n').textContent=d.name;
   $('s5s').textContent=r.status==='trip'?'En viaje hacia tu destino':r.status==='pay'?'Llegaste. Paga el viaje en efectivo al conductor':'Va en camino a recogerte';
   $('s5k').textContent=(+r.km).toFixed(1)+' km';$('s5pr').textContent=rideTxt(r);
-  setBadges();sw('s5');if(navigator.vibrate)navigator.vibrate([200,100,200]);
+  setBadges();setCancelLabel();showCode(r);sw('s5');if(navigator.vibrate)navigator.vibrate([200,100,200]);
 }
 function onDone(r){
   unsubAll();reqId=null;ratingRide=r.id;pRide=null;
@@ -1435,13 +1710,119 @@ $('s6ok').onclick=()=>{
 
 function sw(id){['s1','s2','s3','s4','s5','s6'].forEach(s=>{const el=$(s);if(s===id){if(el.style.display!=='block'){el.style.display='block';el.classList.remove('step-in');void el.offsetWidth;el.classList.add('step-in')}}else el.style.display='none'});if(id==='s6')confetti();fit()}
 
+/* ---------- Soporte: chat con el administrador ---------- */
+let isAdmin=false,supAll=[],supThread=null,supOpen=false,supCh=null,supPollT=null,supRt=false,supTk=0,supReady=false;
+const supKey=t=>'moto_sup_seen_'+(user?user.id:'')+'_'+t;
+const supSeen=t=>+(store.get(supKey(t))||0);
+const supTs=m=>Date.parse(m.created_at);
+function supMark(t){const last=supAll.filter(m=>m.thread_id===t).reduce((a,m)=>Math.max(a,supTs(m)),0);if(last)store.set(supKey(t),last)}
+function supUnread(){
+  if(!user)return 0;
+  if(!isAdmin){const s=supSeen(user.id);return supAll.filter(m=>m.from_admin&&supTs(m)>s).length}
+  const by={};supAll.forEach(m=>{if(!m.from_admin&&supTs(m)>supSeen(m.thread_id))by[m.thread_id]=1});
+  return Object.keys(by).length;
+}
+function supBadges(){const n=supUnread();['helpBadge','adminBadge'].forEach(id=>{const b=$(id);b.textContent=n;b.style.display=n?'grid':'none'})}
+function applyHelpVis(){$('helpItem').style.display=(mode==='d'&&!isAdmin)?'flex':'none';$('adminItem').style.display=isAdmin?'flex':'none'}
+async function initSupport(){
+  if(!sb||!user)return;
+  try{const r=await sb.rpc('is_admin');isAdmin=!r.error&&r.data===true}catch(e){isAdmin=false}
+  applyHelpVis();startSupport();
+}
+function startSupport(){
+  stopSupport();
+  const cfg={event:'INSERT',schema:'public',table:'support_messages'};
+  if(!isAdmin)cfg.filter='thread_id=eq.'+user.id;
+  supCh=sb.channel('support-'+user.id).on('postgres_changes',cfg,p=>p.new&&supIncoming(p.new)).subscribe(st=>{supRt=(st==='SUBSCRIBED')});
+  supPollT=setInterval(supPoll,5000);supPoll();
+}
+function stopSupport(){
+  if(supCh){try{sb.removeChannel(supCh)}catch(e){}supCh=null}
+  clearInterval(supPollT);supPollT=null;supRt=false;supReady=false;supAll=[];
+}
+async function supPoll(){
+  if(!sb||!user)return;
+  if(supRt&&supReady&&!supOpen&&(++supTk%3))return; /* con tiempo real activo se consulta menos */
+  try{
+    let q=sb.from('support_messages').select('*').order('created_at',{ascending:false}).limit(isAdmin?400:200);
+    if(!isAdmin)q=q.eq('thread_id',user.id);
+    const{data,error}=await q;if(error)return;
+    const rows=(data||[]).reverse();
+    if(!supReady){supAll=rows;supReady=true;supBadges();if(supOpen)renderSup();if($('inbox').style.display==='flex')renderInbox();return}
+    rows.forEach(supIncoming);
+  }catch(e){}
+}
+function supIncoming(row){
+  if(!row||supAll.some(m=>m.id===row.id))return;
+  supAll.push(row);supAll.sort((a,b)=>supTs(a)-supTs(b));
+  const mine=row.sender_id===user.id,viewing=supOpen&&supThread===row.thread_id;
+  if(viewing){supMark(row.thread_id);renderSup()}
+  else if(!mine){toast(isAdmin?'Nuevo mensaje de soporte':'Soporte: '+row.text.slice(0,40));if(navigator.vibrate)navigator.vibrate(150)}
+  if($('inbox').style.display==='flex')renderInbox();
+  supBadges();
+}
+function renderSup(){
+  const M=$('supMsgs');M.innerHTML='';
+  const list=supAll.filter(m=>m.thread_id===supThread);
+  if(!list.length)M.appendChild(E('p','empty',isAdmin?'Sin mensajes todavía.':'Escríbenos y el administrador te responderá aquí.'));
+  list.forEach(m=>{const mine=isAdmin?m.from_admin:!m.from_admin;const d=E('div','m '+(mine?'me':'ot'),m.text);d.appendChild(E('small',null,new Date(m.created_at).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})));M.appendChild(d)});
+  M.scrollTop=M.scrollHeight;
+}
+function buildSupQr(){
+  const q=$('supQr');q.innerHTML='';q.style.display='flex';
+  ['Tengo un problema con un viaje','Duda con mi billetera','Quiero pagar mi deuda'].forEach(t=>{const b=E('button',null,t);b.onclick=()=>sendSup(t);q.appendChild(b)});
+}
+function openSupport(){ /* conductor: chat directo con el administrador */
+  document.body.classList.remove('menu');
+  supThread=user.id;supOpen=true;
+  $('supN').textContent='Soporte Moto';$('supR').textContent='Administrador de la app';setAv($('supAv'),null,'S');
+  buildSupQr();$('sup').style.display='flex';supMark(supThread);renderSup();supBadges();supPoll();
+}
+function openThread(tid,name,photo){ /* administrador: abre la conversación de un conductor */
+  supThread=tid;supOpen=true;
+  $('supN').textContent=name;$('supR').textContent='Respondes como administrador';setAv($('supAv'),photo,name);
+  $('supQr').innerHTML='';$('supQr').style.display='none';
+  $('sup').style.display='flex';supMark(tid);renderSup();supBadges();
+}
+function closeSupport(){supOpen=false;supThread=null;$('sup').style.display='none';supBadges();if($('inbox').style.display==='flex')renderInbox()}
+async function sendSup(text){
+  text=(text||'').trim();if(!text||!supThread||!sb)return;
+  $('supIn').value='';
+  const{data,error}=await sb.from('support_messages').insert({thread_id:supThread,sender_id:user.id,from_admin:isAdmin&&supThread!==user.id,text:text.slice(0,1000)}).select().single();
+  if(error){toast(fnMissing(error)?'Falta instalar el SQL de soporte en Supabase':'No se pudo enviar el mensaje');$('supIn').value=text;return}
+  supIncoming(data);
+}
+function openInbox(){document.body.classList.remove('menu');$('inbox').style.display='flex';renderInbox();supPoll()}
+function renderInbox(){
+  const L=$('inboxList'),by={};
+  supAll.forEach(m=>{(by[m.thread_id]=by[m.thread_id]||[]).push(m)});
+  const ids=Object.keys(by).sort((a,b)=>supTs(by[b][by[b].length-1])-supTs(by[a][by[a].length-1]));
+  L.innerHTML='';
+  if(!ids.length){L.appendChild(E('p','empty','Aún no hay conversaciones de conductores.'));return}
+  ids.forEach(tid=>{
+    const last=by[tid][by[tid].length-1],unread=!last.from_admin&&supTs(last)>supSeen(tid);
+    const row=E('button','inRow'+(unread?' un':'')),av=E('div','pa'),t=E('div','t');
+    const cached=profCache[tid]||{name:'Conductor',photo:null};
+    const nm=E('b',null,cached.name),sn=E('small',null,(last.from_admin?'Tú: ':'')+last.text);
+    setAv(av,cached.photo,cached.name);t.append(nm,sn);row.append(av,t);
+    if(unread)row.appendChild(E('i','dot'));
+    row._p=cached;row.onclick=()=>openThread(tid,row._p.name,row._p.photo);
+    getProf(tid).then(p=>{row._p=p;nm.textContent=p.name;setAv(av,p.photo,p.name)});
+    L.appendChild(row);
+  });
+}
+$('helpItem').onclick=openSupport;$('adminItem').onclick=openInbox;
+$('supBack').onclick=closeSupport;$('inBack').onclick=()=>{$('inbox').style.display='none'};
+$('supSend').onclick=()=>sendSup($('supIn').value);
+$('supIn').addEventListener('keydown',e=>{if(e.key==='Enter')sendSup($('supIn').value)});
+
 /* ---------- Menú y Cambios de Modo ---------- */
 $('menuBtn').onclick=()=>document.body.classList.add('menu');
 $('scrim').onclick=()=>document.body.classList.remove('menu');
 function setMode(m){
   mode=m;const d=m==='d';
   $('sP').style.display=d?'none':'block';$('sD').style.display=d?'block':'none';
-  $('mode').textContent=d?'Conductor':'Pasajero';$('swT').textContent=d?'Pasar a modo pasajero':'Pasar a modo conductor';$('walletItem').style.display=d?'flex':'none';
+  $('mode').textContent=d?'Conductor':'Pasajero';$('swT').textContent=d?'Pasar a modo pasajero':'Pasar a modo conductor';$('walletItem').style.display=d?'flex':'none';applyHelpVis();
   clearRoute();endPick();
   
   if(d){
@@ -1454,7 +1835,7 @@ function setMode(m){
     $('navBtn').style.display = 'none';
     sw('s1');
   }
-  setMeIcon();updateChip();$('chip').style.display=(d||me)?'flex':'none';
+  setMeIcon();updateChip();clearTimeout(chipT);clearTimeout(chipT2);$('chip').style.opacity='1';$('chip').style.display=d?'flex':'none';
   document.body.classList.remove('menu');fit();
 }
 $('swBtn').onclick=()=>{
@@ -1479,7 +1860,7 @@ $('on').onclick=async()=>{
   renderReqs();
 };
 $('prof').onclick=()=>{toast(user.name+' · '+user.phone);document.body.classList.remove('menu')};
-$('out').onclick=async()=>{stopFeed();unsubAll();try{if(sb)await sb.auth.signOut()}catch(e){}user=null;location.reload()};
+$('out').onclick=async()=>{stopFeed();unsubAll();stopSupport();try{if(sb)await sb.auth.signOut()}catch(e){}user=null;location.reload()};
 
 function toast(m){const e=$('toast');e.textContent=m;e.style.display='block';e.classList.remove('show');void e.offsetWidth;e.classList.add('show');clearTimeout(toast.h);toast.h=setTimeout(()=>e.style.display='none',3500)}
 function fit(){requestAnimationFrame(()=>{const s=mode==='p'?$('sP'):$('sD');document.documentElement.style.setProperty('--sh',s.offsetHeight+'px')})}
