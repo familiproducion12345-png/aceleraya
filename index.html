@@ -422,7 +422,7 @@ body.menu #scrim { opacity: 1; pointer-events: auto; }
   </div>
   <div class="wGrid"><div><small>Comisión (20%)</small><b id="wCom" style="color:var(--red)">$0</b></div><div><small>Ganancias netas</small><b id="wNet">$0</b></div></div>
   <div class="wCard"><b>Ganado por día</b><div class="bars" id="wBars"></div></div>
-  <div class="wCard"><b>Viajes de la semana</b><div id="wList"></div><p class="note" style="color:var(--mut);font-size:14px;margin-top:14px;line-height:1.5;font-weight:500;">Por cada viaje se descuenta el 20% de comisión. Cobras el viaje en efectivo y le debes la comisión a la app.</p></div>
+  <div class="wCard"><b>Viajes de la semana</b><div id="wList"></div><p class="note" style="color:var(--mut);font-size:14px;margin-top:14px;line-height:1.5;font-weight:500;">Por cada viaje se descuenta el 20% de comisión a Moto. Cobras el viaje en efectivo y le debes la comisión a la app.</p></div>
 </div>
 
 <div id="chat">
@@ -433,6 +433,7 @@ body.menu #scrim { opacity: 1; pointer-events: auto; }
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js"></script>
+<!-- Supabase JS Client SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const $=id=>document.getElementById(id);
@@ -470,7 +471,7 @@ const MOTO = w => `<svg width="${w}" height="${w}" viewBox="0 0 60 60"><ellipse 
 const DEST = '<svg width="44" height="58" viewBox="0 0 44 58"><path d="M22 0C9.8 0 0 9.8 0 22c0 15 22 36 22 36s22-21 22-36C44 9.8 34.2 0 22 0z" fill="#0F0F14" filter="drop-shadow(0 6px 8px rgba(0,0,0,0.3))"/><circle cx="22" cy="22" r="8" fill="#fff"/></svg>';
 const PICK = '<svg width="44" height="58" viewBox="0 0 44 58"><path d="M22 0C9.8 0 0 9.8 0 22c0 15 22 36 22 36s22-21 22-36C44 9.8 34.2 0 22 0z" fill="#18B25B" filter="drop-shadow(0 6px 8px rgba(24,178,91,0.3))"/><circle cx="22" cy="22" r="8" fill="#fff"/></svg>';
 
-/* ---------- Auth (Supabase) ---------- */
+/* ---------- Autenticación (Supabase) ---------- */
 const SUPABASE_URL='https://ixajhadihphpmhkllyvf.supabase.co';
 const SUPABASE_KEY='sb_publishable__QS2fmX09RyOEg3LMatd1A_DbQutV4u';
 const sb=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY):null;
@@ -526,7 +527,7 @@ $('formReg').onsubmit=async e=>{
   try{
     const{data,error}=await sb.auth.signUp({email,password,options:{data:{first_name,last_name,phone}}});
     if(error)throw error;
-    if(data.session){ 
+    if(data.session){ /* confirmación de correo desactivada: entra directo */
       user=mkUser(data.session.user);after();
     }else{
       authAlert('¡Cuenta creada con éxito! Revisa tu correo electrónico para verificar tu cuenta.',false);
@@ -557,8 +558,9 @@ function initMap(){
     map.addLayer({id:'acc-f',type:'fill',source:'acc',paint:{'fill-color':'#007AFF','fill-opacity':.12}});
     map.addLayer({id:'acc-l',type:'line',source:'acc',paint:{'line-color':'#007AFF','line-opacity':.35,'line-width':1}});
     map.addSource('route',{type:'geojson',data:EMPTY});
-    map.addLayer({id:'r-case',type:'line',source:'route',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#fff','line-width':14}});
-    map.addLayer({id:'r-line',type:'line',source:'route',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#E11931','line-width':8}});
+    map.addLayer({id:'r-case',type:'line',source:'route',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#fff','line-width':13}});
+    /* RUTA TODO EN ROJO */
+    map.addLayer({id:'r-line',type:'line',source:'route',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#E11931','line-width':7}});
     map.addLayer({id:'r-dash',type:'line',source:'route',layout:{'line-cap':'butt'},paint:{'line-color':'#fff','line-width':2,'line-opacity':.7,'line-dasharray':[.1,2.2]}});
     mapOk();
   });
@@ -570,7 +572,7 @@ const circle=(c,r)=>{const pts=[],dLat=r/111320,dLng=r/(111320*Math.cos(c.lat*Ma
 
 /* ---------- Ubicación ---------- */
 function gate(t,p,b,fn,ic){$('gT').textContent=t;$('gP').textContent=p;$('gate').style.display='flex';const btn=$('gB');btn.style.display=b?'block':'none';if(b)btn.textContent=b;btn.onclick=fn||null;if(ic)$('gIc').innerHTML=ic;}
-function closeGate(){$('gate').style.display='none';$('gIc').innerHTML='<svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--red)" stroke-width="2" stroke-linecap="round"><path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/></svg>';}
+function closeGate(){$('gate').style.display='none';$('gIc').innerHTML='<svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#D90F2B" stroke-width="1.8" stroke-linecap="round"><path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/></svg>';}
 async function after(){
   await mapReady;$('reg').style.display='none';
   $('dN').textContent=user.name;$('dP').textContent=user.phone;applyAvatar();$('hi').textContent='Hola, '+user.name.split(' ')[0];
@@ -601,12 +603,14 @@ function onFix(p,first){
 }
 $('locBtn').onclick=()=>{if(me)map.flyTo({center:[me.lng,me.lat],zoom:17});else locate()};
 
+/* ---------- Navegación a Google Maps ---------- */
 $('navBtn').onclick=()=>{
   if(!myJob)return;
   const tg = myJob.phase === 'pickup' ? myJob.from : myJob.to;
   window.open(`https://www.google.com/maps/dir/?api=1&destination=${tg.lat},${tg.lng}`, '_blank');
 };
 
+/* ---------- Motor de Direcciones (Mejorado) ---------- */
 const fl=f=>{const p=f.properties,st=[p.street,p.housenumber].filter(Boolean).join(' '),a=p.name||st||'Lugar';const b=[p.name&&st&&p.name!==st?st:'',p.district||p.locality||'',p.city||p.county,p.state].filter((v,i,r)=>v&&v!==a&&r.indexOf(v)===i).slice(0,3).join(', ');return[a,b]};
 async function rev(c,detect){if(detect)lastCC=null;try{const r=await fetch(`https://photon.komoot.io/reverse?lat=${c.lat}&lon=${c.lng}`);const d=await r.json();if(d.features&&d.features[0]){if(detect)lastCC=(d.features[0].properties.countrycode||'').toUpperCase();const[a,b]=fl(d.features[0]);return[a,b].filter(Boolean).join(', ')}}catch(e){}return 'Punto en el mapa'}
 let t,ctrl=null;
@@ -660,6 +664,7 @@ async function suggest(q){
   }catch(e){if(e.name!=='AbortError')toast('No pudimos buscar. Usa “Elegir en el mapa”.')}
 }
 
+/* ---------- Elegir en el mapa ---------- */
 function setPA(t){$('pA').textContent=t;$('bubT').textContent=t}
 function openPick(target){
   picking=true;sw('s2');$('sug').innerHTML='';
@@ -675,6 +680,7 @@ function endPick(){picking=false;$('pin').style.display='none';$('pin').classLis
 $('pNo').onclick=()=>{endPick();sw('s1')};
 $('pOk').onclick=()=>{const c=map.getCenter(),a=$('pA').textContent;endPick();go({lat:c.lat,lng:c.lng},a)};
 
+/* ---------- Ruta (OSRM) ---------- */
 async function go(p,label){
   if(!me){toast('Esperando tu ubicación…');return}
   dest=p;$('sug').innerHTML='';$('dest').value='';clearRoute();saveRecent(p,label);
@@ -695,6 +701,7 @@ async function go(p,label){
 function clearRoute(){if(map&&map.getSource('route'))map.getSource('route').setData(EMPTY);[destM,kmM,pickM].forEach(x=>x&&x.remove());destM=kmM=pickM=null;legA=legB=null}
 $('chg').onclick=()=>{clearRoute();dest=null;sw('s1');if(me)map.flyTo({center:[me.lng,me.lat],zoom:17})};
 
+/* ---------- Tarifas (2000 COP/km) ---------- */
 const TARIFF={CO:{name:'Colombia',flag:'🇨🇴',cur:'COP',rate:2000,loc:'es-CO',dec:0},VE:{name:'Venezuela',flag:'🇻🇪',cur:'USD',rate:0.5,loc:'en-US',dec:2}};
 let cc='CO',ccSet=false,lastCC=null,trip=null,warned=false;
 const CUR={COP:{loc:'es-CO',dec:0},USD:{loc:'en-US',dec:2}};
@@ -710,6 +717,7 @@ function applyCC(){
 }
 function showPrice(){$('tP').innerHTML=money(fare(trip.km))+'<small>'+TARIFF[cc].cur+'</small>';$('tRate').textContent=TARIFF[cc].name+' · '+money(TARIFF[cc].rate)+'/km'}
 
+/* ---------- Pedir Moto ---------- */
 const bc='BroadcastChannel' in window?new BroadcastChannel('moto'):null;
 let reqId=null,sT=null,radar=null,armT=null,myJob=null;
 const MSG=['Contactando conductores cercanos…','Buscando la moto más cercana…','Esto puede tardar un momento…'];
@@ -735,6 +743,7 @@ function cancelTrip(btn){
 }
 $('cancel').onclick=()=>cancelTrip($('cancel'));$('cancel2').onclick=()=>cancelTrip($('cancel2'));
 
+/* ---------- Iconos ---------- */
 const E=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
 function setMeIcon(){
   if(meM) {
@@ -745,6 +754,7 @@ function setMeIcon(){
 function setAv(el,photo,name){el.innerHTML='';if(photo){const i=new Image();i.src=photo;el.appendChild(i)}else el.textContent=(name||'?')[0].toUpperCase()}
 function applyAvatar(){setAv($('av'),user.photo,user.name)}
 
+/* ----- Foto Obligatoria (Conductor) ----- */
 function openPhoto(){tmpPhoto=user.photo||null;showPrev();$('phOk').textContent=phForDriver?'Continuar como conductor':'Guardar foto';$('photo').style.display='flex'}
 function showPrev(){const p=$('phPrev');p.innerHTML='';if(tmpPhoto){const i=new Image();i.src=tmpPhoto;p.appendChild(i)}else p.textContent='📷';$('phOk').disabled=!tmpPhoto;$('phPick').textContent=tmpPhoto?'Cambiar foto':'Tomar o elegir foto'}
 $('phPick').onclick=()=>$('phIn').click();
@@ -754,6 +764,7 @@ $('phOk').onclick=()=>{user.photo=tmpPhoto;store.set('moto_photo_'+user.id,user.
 $('phNo').onclick=()=>{$('photo').style.display='none';phForDriver=false};
 $('av').onclick=()=>{phForDriver=false;document.body.classList.remove('menu');openPhoto()};
 
+/* ----- Conductor: Rutas y Lógica OSRM ----- */
 async function osrm(pts){
   try{const q=pts.map(p=>p.lng+','+p.lat).join(';');const r=await fetch('https://router.project-osrm.org/route/v1/driving/'+q+'?overview=full&geometries=geojson');const d=await r.json();const rt=d.routes[0];return{coords:rt.geometry.coordinates,legs:rt.legs,wps:d.waypoints.map(w=>w.location)}}catch(e){return null}
 }
@@ -780,10 +791,11 @@ function fitLegs(){const b=new maplibregl.LngLatBounds();[legA,legB].forEach(l=>
   requestAnimationFrame(()=>map.fitBounds(b,{padding:{top:130,left:50,right:50,bottom:($('sD').offsetHeight||300)+40},duration:800,maxZoom:17}))}
 function trim(coords,pos){
   if(!coords||coords.length<2)return coords;const i=nearIdx(coords,[pos.lng,pos.lat]);
-  if(hav(pos,{lat:coords[i][1],lng:coords[i][0]})>90)return coords;
+  if(hav(pos,{lat:coords[i][1],lng:coords[i][0]})>90)return coords; // fuera de ruta
   return[[pos.lng,pos.lat],...coords.slice(i+1)]; 
 }
 
+/* ----- Conductor: Ver Viajes y Rutas ----- */
 function renderReqs(){
   if(myJob||previewing)return;const box=$('rq');box.innerHTML='';
   const ids=Object.keys(pending);
@@ -793,7 +805,7 @@ function renderReqs(){
     const c=E('div','req');c.dataset.id=id;
     const h=E('div');h.style.cssText='display:flex;justify-content:space-between;align-items:center';h.append(E('b',null,r.name),E('b','pr',r.price));
     const a=E('div','addr',r.km.toFixed(1)+' km'+(dk?' · Recogida a '+dk:''));a.style.cssText='color:var(--mut);margin:0';
-    const a2=E('div','addr','Destino: '+r.label);a2.style.cssText='color:var(--mut);font-weight:600;font-size:13px';
+    const a2=E('div','addr','Destino: '+r.label);a2.style.cssText='color:var(--mut);font-weight:500;font-size:13px';
     const row=E('div','chips'),rj=E('button','pill','Rechazar'),rt=E('button','pill','Ver ruta'),ac=E('button','pill','Aceptar');ac.style.cssText='background:var(--red);color:#fff';
     rj.onclick=()=>{delete pending[id];renderReqs()};rt.onclick=()=>previewReq(r);ac.onclick=()=>acceptReq(r);
     row.append(rj,rt,ac);c.append(h,a,a2,row);box.appendChild(c)});
@@ -803,14 +815,15 @@ async function previewReq(r){
   toast('Calculando ruta…');const p=await plan(r);if(!pending[r.id])return;
   previewing=r;prevPlan=p;legA=p.a;legB=p.b;drawLegs();legMarkers(r,p);$('sD').classList.add('prev');
   const com=rnd(r.fare*.2,r.cur),box=$('rq');box.innerHTML='';const c=E('div','req');
-  const row=(l,v,red)=>{const m=E('div','mini');m.style.marginTop='8px';m.append(E('span',null,l),E('span',red?'pr':null,v));if(red)m.lastChild.style.color='var(--red)';return m};
+  const row=(l,v,red)=>{const m=E('div','mini');m.style.marginTop='6px';m.append(E('span',null,l),E('span',red?'pr':null,v));if(red)m.lastChild.style.color='var(--red)';return m};
   c.append(E('b',null,'Ruta de '+r.name),row('Hasta el pasajero',p.a?p.kmA.toFixed(1)+' km · '+Math.max(1,Math.round(p.minA))+' min':'—'),row('Pasajero → destino',p.kmB.toFixed(1)+' km · '+Math.max(2,Math.round(p.minB))+' min'),row('Tarifa',r.price+'  (−'+money(com,r.cur)+' comisión)'),row('Tú ganas',money(r.fare-com,r.cur),1));
   const ac=E('button','btn','Aceptar viaje'),ch=E('div','chips'),bk=E('button','pill','← Volver'),rj=E('button','pill','Rechazar');
-  ac.style.marginTop='14px';ac.onclick=()=>acceptReq(r);bk.onclick=closePreview;rj.onclick=()=>{delete pending[r.id];closePreview()};
+  ac.style.marginTop='10px';ac.onclick=()=>acceptReq(r);bk.onclick=closePreview;rj.onclick=()=>{delete pending[r.id];closePreview()};
   ch.append(bk,rj);c.append(ac,ch);box.appendChild(c);fit();fitLegs();
 }
 function closePreview(){previewing=null;prevPlan=null;clearRoute();$('sD').classList.remove('prev');renderReqs()}
 
+/* ----- Conductor: Viaje Aceptado ----- */
 $('sD_grab').onclick = () => { if ($('sD').classList.contains('job') && myJob && myJob.phase !== 'pay') $('sD').classList.toggle('minimized'); };
 
 async function acceptReq(r){
@@ -820,7 +833,7 @@ async function acceptReq(r){
   previewing=null;prevPlan=null;$('sD').classList.remove('prev');$('sD').classList.add('job');
   legA=p.a;legB=p.b;drawLegs();legMarkers(r,p);renderJob();fitLegs();driverTick();
   $('sD').classList.add('minimized');
-  $('navBtn').style.display = 'grid';
+  $('navBtn').style.display = 'grid'; // Mostrar botón de nav
 }
 
 function renderJob(){
@@ -829,9 +842,9 @@ function renderJob(){
   if (pay) {
     const com=rnd(j.fare*.2,j.cur);
     c.style.textAlign='center';
-    const hd=E('h3',null,'Cobrar viaje');hd.style.marginBottom='8px';hd.style.fontSize='24px';
-    const amt=E('div',null,j.price);amt.style.cssText='font-size:42px;font-weight:800;color:var(--red);margin:14px 0;letter-spacing:-1px';
-    const de=E('div',null,'Comisión que debes: '+money(com,j.cur));de.style.cssText='color:var(--mut);font-weight:700;margin-bottom:20px;font-size:15px';
+    const hd=E('h3',null,'Cobrar viaje');hd.style.marginBottom='8px';
+    const amt=E('div',null,j.price);amt.style.cssText='font-size:38px;font-weight:800;color:var(--red);margin:10px 0;letter-spacing:-1px';
+    const de=E('div',null,'Comisión que debes: '+money(com,j.cur));de.style.cssText='color:var(--mut);font-weight:600;margin-bottom:16px;font-size:14px';
     const b1=E('button','btn','Efectivo recibido');
     b1.onclick=finishJob;
     c.append(hd,amt,de,b1);
@@ -839,8 +852,8 @@ function renderJob(){
   } else {
     const d=E('div','drv'),pa=E('div','pa'),t=E('div','t'),cb=E('button','pill chatB','💬');
     setAv(pa,null,j.name);t.append(E('b',null,j.name),E('small',null,pk?'Ve a recoger al pasajero':'Lleva al pasajero a su destino'));t.lastChild.id='jS';
-    cb.style.cssText='flex:none;padding:12px 16px;font-size:20px;';cb.appendChild(E('span','badge'));d.append(pa,t,cb);
-    const m=E('div','mini');m.style.margin='14px 0';const inf=E('span',null,'Calculando…');inf.id='jInfo';const pr=E('b','pr',j.price);pr.style.color='var(--red)';m.append(inf,pr);
+    cb.style.cssText='flex:none;padding:12px 15px';cb.appendChild(E('span','badge'));d.append(pa,t,cb);
+    const m=E('div','mini');m.style.margin='10px 0';const inf=E('span',null,'Calculando…');inf.id='jInfo';const pr=E('b','pr',j.price);pr.style.color='var(--red)';m.append(inf,pr);
     const nx=E('button','btn',pk?'Recogí al pasajero':'Llegué al destino');nx.id='jNext';nx.style.marginTop='0';
     
     nx.onclick=()=>{
@@ -849,13 +862,13 @@ function renderJob(){
         $('sD').classList.add('minimized');
       } else if(myJob.phase==='trip') {
         myJob.phase='pay';
-        $('navBtn').style.display='none';
+        $('navBtn').style.display='none'; // Ocultar nav
         renderJob();
         if(navigator.vibrate)navigator.vibrate(200);
       }
     };
     
-    const ch=E('div','chips'),cn=E('button','pill ghost','Cancelar viaje');
+    const ch=E('div','chips'),cn=E('button','pill ghost2','Cancelar viaje');
     cn.onclick=()=>{if(!cn.dataset.arm){cn.dataset.arm=1;cn.textContent='Toca de nuevo';setTimeout(()=>{delete cn.dataset.arm;cn.textContent='Cancelar viaje'},3000);return}
       bc&&bc.postMessage({t:'dcancel',id:j.id});abortJob();toast('Viaje cancelado')};
     ch.append(cn);c.append(d,m,nx,ch);
@@ -882,6 +895,7 @@ function finishJob(){
   updateChip();
   toast('Viaje completado · Ganaste '+money(j.fare-com,j.cur));
   
+  // Desconectar si la deuda sobrepasó el límite al terminar
   const w = weekStats();
   if (w.com >= 10000 && online) {
       online = false;
@@ -895,6 +909,7 @@ function finishJob(){
   }
 }
 
+/* ----- Balance y Billetera (Conductor) ----- */
 function weekStart(){const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));d.setHours(0,0,0,0);return d.getTime()}
 function weekStats(){
   const cur=TARIFF[cc].cur,ws=weekStart(),all=(store.get('moto_trips')||[]).filter(t=>t.ts>=ws&&t.cur===cur);
@@ -927,6 +942,7 @@ function renderWallet(){
     rr.append(E('b',null,money(t.fare,cur)),E('small','neg','Comisión −'+money(t.com,cur)));r.append(l,rr);L.appendChild(r)});
 }
 
+/* ----- Chat en Vivo ----- */
 const chatId=()=>reqId||(myJob&&myJob.id);
 function setBadges(){document.querySelectorAll('.chatB .badge').forEach(b=>{b.textContent=unread;b.style.display=unread?'grid':'none'})}
 function openChat(){
@@ -945,6 +961,7 @@ $('chIn').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat($('chIn').v
 $('chBack').onclick=closeChat;
 document.addEventListener('click',e=>{if(e.target.closest('.chatB'))openChat()});
 
+/* ----- Pasajero: estados en vivo y rutas animadas ----- */
 function onAccepted(m){
   const d=m.driver;
   stopSearch();chatMsgs=[];unread=0;chatWith=d;
@@ -962,12 +979,14 @@ function onDrvLoc(m){
   if(m.phase==='pickup'){
     $('s5s').textContent = m.d<50 ? '¡Tu conductor llegó!' : 'Tu conductor está a '+kmTxt(m.d);
     
+    // Notificación grande cuando llega
     if (m.d<50 && trip && !trip.notifiedArrival) {
         trip.notifiedArrival = true;
-        const ic='<svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--red)" stroke-width="2" stroke-linecap="round"><path d="M5 12l5 5L20 7"/></svg>';
+        const ic='<svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#D90F2B" stroke-width="2" stroke-linecap="round"><path d="M5 12l5 5L20 7"/></svg>';
         gate('¡Tu conductor llegó!','Sal al punto de encuentro para iniciar tu viaje.','Entendido', closeGate, ic);
         if(navigator.vibrate)navigator.vibrate([300,150,300]);
     }
+    // Ruta en vivo del conductor hacia mi
     if(trip && trip.legA) {
         trip.legA = trim(trip.legA, {lat:m.lat, lng:m.lng});
         if(trip.legA.length>1) map.getSource('route').setData({type:'Feature',geometry:{type:'LineString',coordinates:trip.legA}});
@@ -975,6 +994,7 @@ function onDrvLoc(m){
   } else if(m.phase==='trip') {
     $('s5s').textContent='En viaje · '+kmTxt(m.d)+' al destino';
     
+    // Ruta en vivo hacia el destino
     if(trip && trip.legB){
         trip.legB = trim(trip.legB, {lat:m.lat, lng:m.lng});
         if(trip.legB.length>1) map.getSource('route').setData({type:'Feature',geometry:{type:'LineString',coordinates:trip.legB}});
@@ -982,6 +1002,7 @@ function onDrvLoc(m){
   }
 }
 
+/* Sistema de Calificación (Pasajero) */
 let currentRating = 0;
 document.querySelectorAll('#rateStars span').forEach(s => {
    s.onclick = () => {
@@ -1002,6 +1023,7 @@ $('s6ok').onclick=()=>{
   $('s6ok').disabled = true;
 };
 
+/* ----- Comunicación ----- */
 if(bc)bc.onmessage=e=>{const m=e.data;
   if(m.t==='req'&&mode==='d'&&online){pending[m.r.id]=m.r;if(navigator.vibrate)navigator.vibrate(300);renderReqs()}
   else if(m.t==='cancel'){
@@ -1017,6 +1039,7 @@ if(bc)bc.onmessage=e=>{const m=e.data;
 };
 function sw(id){['s1','s2','s3','s4','s5','s6'].forEach(s=>$(s).style.display=s===id?'block':'none');fit()}
 
+/* ---------- Menú y Cambios de Modo ---------- */
 $('menuBtn').onclick=()=>document.body.classList.add('menu');
 $('scrim').onclick=()=>document.body.classList.remove('menu');
 function setMode(m){
