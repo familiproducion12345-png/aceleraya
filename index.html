@@ -463,6 +463,160 @@ async function checkSession(){
   $('reg').style.display='flex';
 }
 
+/* ---------- Datos en vivo (Supabase: viajes, chat, ubicación) ---------- */
+const LIMIT={COP:10000,USD:2.5};
+let pRide=null,pLegA=null,pLegB=null,pNotified=false,ratingRide=null,accepting=false,finishing=false;
+let chans=[],pollT=null,feedCh=null,feedT=null,feedBusy=false,lastPub=0,tripsCache=[],debt={COP:0,USD:0};
+const declined=new Set(),inflight=new Set(),profCache={};
+const rideTxt=r=>money(+r.fare,r.currency)+' '+r.currency;
+const debtNow=()=>debt[TARIFF[cc].cur]||0;
+const rpcErr=e=>{const m=(e&&e.message)||'';if(/RIDE_TAKEN/.test(m))return'TAKEN';if(/DEBT_LIMIT/.test(m))return'DEBT';if(/RIDE_NOT_FOUND/.test(m))return'GONE';if(/NOT_ALLOWED|INVALID_TRANSITION/.test(m))return'NA';return'ERR'};
+
+async function getProf(id){
+  if(profCache[id])return profCache[id];
+  try{
+    const{data}=await sb.from('profiles').select('name,avatar').eq('id',id).maybeSingle();
+    if(data){profCache[id]={name:data.name||'Usuario',photo:data.avatar||null};return profCache[id]}
+  }catch(e){}
+  return{name:'Usuario',photo:null};
+}
+async function syncProfile(){
+  if(!sb||!user)return;
+  try{
+    const{data}=await sb.from('profiles').select('name,phone,avatar').eq('id',user.id).maybeSingle();
+    if(data){
+      if(data.avatar&&data.avatar!==user.photo){user.photo=data.avatar;store.set('moto_photo_'+user.id,user.photo);applyAvatar()}
+      else if(!data.avatar&&user.photo)await sb.from('profiles').update({avatar:user.photo}).eq('id',user.id);
+    }else{
+      await sb.from('profiles').insert({id:user.id,name:user.name,phone:user.phone,email:user.mail,avatar:user.photo});
+    }
+  }catch(e){}
+  loadFinance();
+}
+async function loadFinance(){
+  if(!sb||!user)return;
+  try{
+    const ws=new Date(weekStart()).toISOString();
+    const[t,b]=await Promise.all([
+      sb.from('rides').select('id,label,fare,currency,commission,finished_at').eq('driver_id',user.id).eq('status','done').gte('finished_at',ws).order('finished_at'),
+      sb.from('driver_balance').select('currency,debt').eq('driver_id',user.id)
+    ]);
+    if(!t.error)tripsCache=(t.data||[]).map(x=>({id:x.id,ts:Date.parse(x.finished_at),label:x.label,name:'',fare:+x.fare,cur:x.currency,com:+x.commission}));
+    if(!b.error){debt={COP:0,USD:0};(b.data||[]).forEach(x=>{debt[x.currency]=+x.debt})}
+  }catch(e){}
+  updateChip();
+}
+async function reqFromRow(r){
+  const p=await getProf(r.passenger_id);
+  return{id:r.id,ts:Date.parse(r.created_at),name:p.name,photo:p.photo,pid:r.passenger_id,from:{lat:r.from_lat,lng:r.from_lng},to:{lat:r.to_lat,lng:r.to_lng},label:r.label,km:+r.km,fare:+r.fare,cur:r.currency,price:rideTxt(r)};
+}
+
+/* Suscripción a un viaje concreto (tiempo real + respaldo por consulta cada 3 s) */
+function unsubAll(){chans.forEach(c=>{try{sb.removeChannel(c)}catch(e){}});chans=[];clearInterval(pollT);pollT=null}
+function subRide(id,onRide,onLoc){
+  unsubAll();
+  chans.push(sb.channel('ride-'+id).on('postgres_changes',{event:'*',schema:'public',table:'rides',filter:'id=eq.'+id},p=>p.new&&onRide(p.new)).subscribe());
+  chans.push(sb.channel('msg-'+id).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'ride_id=eq.'+id},p=>onMsg(p.new)).subscribe());
+  if(onLoc)chans.push(sb.channel('loc-'+id).on('postgres_changes',{event:'*',schema:'public',table:'driver_locations',filter:'ride_id=eq.'+id},p=>p.new&&p.new.lat!=null&&onLoc(p.new)).subscribe());
+  pollT=setInterval(()=>pollRide(id,onRide,onLoc),3000);
+}
+async function pollRide(id,onRide,onLoc){
+  try{
+    const{data}=await sb.from('rides').select('*').eq('id',id).maybeSingle();
+    if(data)onRide(data);
+    if(onLoc&&data&&data.driver_id&&data.status!=='done'&&data.status!=='cancelled'){
+      const l=await sb.from('driver_locations').select('*').eq('ride_id',id).maybeSingle();
+      if(l.data)onLoc(l.data);
+    }
+    if(data&&data.driver_id&&chatId()===id){
+      const m=await sb.from('messages').select('*').eq('ride_id',id).order('created_at');
+      (m.data||[]).forEach(onMsg);
+    }
+  }catch(e){}
+}
+function onMsg(row){
+  if(!row||chatMsgs.some(m=>m.id===row.id))return;
+  const mine=row.sender_id===user.id;
+  chatMsgs.push({id:row.id,mine,text:row.text,ts:Date.parse(row.created_at)});
+  if(chatOpen)renderChat();
+  else if(!mine){unread++;setBadges();toast('💬 '+row.text.slice(0,40));if(navigator.vibrate)navigator.vibrate(150)}
+}
+function publishLoc(j,d){
+  if(!sb||!user||j.phase==='pay')return;
+  const now=Date.now();if(now-lastPub<2500)return;lastPub=now;
+  sb.from('driver_locations').upsert({driver_id:user.id,ride_id:j.id,lat:me.lat,lng:me.lng,phase:j.phase,distance:Math.round(d),updated_at:new Date().toISOString()}).then(()=>{});
+}
+
+/* Conductor: solicitudes abiertas en tiempo real */
+async function feedRow(row){
+  const id=row.id,fresh=Date.now()-Date.parse(row.created_at)<600000;
+  if(row.status==='searching'&&fresh&&row.passenger_id!==user.id&&!declined.has(id)){
+    if(pending[id]||inflight.has(id))return;
+    inflight.add(id);
+    try{
+      const r=await reqFromRow(row);
+      if(online&&mode==='d'&&!declined.has(id)){pending[id]=r;if(!myJob&&navigator.vibrate)navigator.vibrate(300);renderReqs()}
+    }finally{inflight.delete(id)}
+  }else if(pending[id]){
+    delete pending[id];
+    if(previewing&&previewing.id===id){closePreview();toast('Ese viaje ya no está disponible')}else renderReqs();
+  }
+}
+async function pollFeed(){
+  if(feedBusy||!sb)return;feedBusy=true;
+  try{
+    const since=new Date(Date.now()-600000).toISOString();
+    const{data,error}=await sb.from('rides').select('*').eq('status','searching').gte('created_at',since).order('created_at',{ascending:false}).limit(20);
+    if(error)throw error;
+    const ids=new Set((data||[]).map(r=>r.id));
+    Object.keys(pending).forEach(id=>{if(!ids.has(id)){delete pending[id];if(previewing&&previewing.id===id){closePreview();toast('Ese viaje ya no está disponible')}}});
+    for(const r of (data||[]))await feedRow(r);
+    renderReqs();
+  }catch(e){}
+  feedBusy=false;
+}
+function startFeed(){
+  stopFeed();
+  feedCh=sb.channel('feed').on('postgres_changes',{event:'*',schema:'public',table:'rides'},p=>p.new&&feedRow(p.new)).subscribe();
+  pollFeed();feedT=setInterval(pollFeed,4000);
+}
+function stopFeed(){if(feedCh){try{sb.removeChannel(feedCh)}catch(e){}feedCh=null}clearInterval(feedT);feedT=null}
+
+/* Retomar viaje activo si se recarga la página */
+async function myActiveRide(){
+  const{data}=await sb.from('rides').select('*').eq('passenger_id',user.id).in('status',['searching','pickup','trip','pay']).maybeSingle();
+  return data;
+}
+async function resumeRide(){
+  if(!sb||!user)return;
+  try{
+    const{data:d}=await sb.from('rides').select('*').eq('driver_id',user.id).in('status',['pickup','trip','pay']).maybeSingle();
+    if(d){await resumeDriver(d);return}
+    const a=await myActiveRide();
+    if(!a)return;
+    if(a.status==='searching'&&Date.now()-Date.parse(a.created_at)>600000){await sb.rpc('cancel_ride',{p_ride:a.id});return}
+    resumePassenger(a);
+  }catch(e){}
+}
+async function resumeDriver(row){
+  const r=await reqFromRow(row);
+  setMode('d');online=true;$('dp').classList.add('on');$('dS').textContent='Conectado';$('on').textContent='Desconectarme';
+  myJob={...r,phase:row.status};chatMsgs=[];unread=0;chatWith={name:r.name,photo:r.photo};
+  legA=row.status==='pickup'?row.leg_a:null;legB=row.status==='pay'?null:row.leg_b;
+  $('sD').classList.add('job');drawLegs();legMarkers(r,{b:row.leg_b});
+  subRide(r.id,driverRideChanged,null);startFeed();
+  renderJob();fitLegs();
+  if(row.status!=='pay')$('navBtn').style.display='grid';
+}
+function resumePassenger(r){
+  reqId=r.id;chatMsgs=[];unread=0;pRide=null;
+  trip=trip||{p:{lat:r.to_lat,lng:r.to_lng},label:r.label,km:+r.km,min:0,coords:null};
+  subRide(reqId,applyPassengerRide,onDrvLoc);
+  destM=new maplibregl.Marker({element:mk(DEST,'dM'),anchor:'bottom'}).setLngLat([r.to_lng,r.to_lat]).addTo(map);
+  if(r.status!=='searching'&&r.leg_b&&map.getSource('route'))map.getSource('route').setData({type:'Feature',geometry:{type:'LineString',coordinates:r.leg_b}});
+  if(r.status==='searching'){pRide=r;searchUI()}else applyPassengerRide(r);
+}
+
 /* ---------- Mapa ---------- */
 function initMap(){
   if(!window.maplibregl){gate('Sin conexión','No pudimos cargar el mapa. Revisa tu internet.','Reintentar',()=>location.reload());return}
@@ -498,7 +652,7 @@ function closeGate(){$('gate').style.display='none';$('gIc').innerHTML='<svg wid
 async function after(){
   await mapReady;$('reg').style.display='none';
   $('dN').textContent=user.name;$('dP').textContent=user.phone;applyAvatar();$('hi').textContent='Hola, '+user.name.split(' ')[0];
-  fit();let st='prompt';
+  fit();syncProfile().then(resumeRide);let st='prompt';
   try{st=(await navigator.permissions.query({name:'geolocation'})).state}catch(e){}
   if(st==='granted')locate();else gate('Activa tu ubicación','Usamos tu ubicación exacta y en tiempo real para el viaje.','Activar ubicación',locate);
 }
@@ -640,28 +794,42 @@ function applyCC(){
 function showPrice(){$('tP').innerHTML=money(fare(trip.km))+'<small>'+TARIFF[cc].cur+'</small>';$('tRate').textContent=TARIFF[cc].name+' · '+money(TARIFF[cc].rate)+'/km'}
 
 /* ---------- Pedir Moto ---------- */
-const bc='BroadcastChannel' in window?new BroadcastChannel('moto'):null;
 let reqId=null,sT=null,radar=null,armT=null,myJob=null;
 const MSG=['Contactando conductores cercanos…','Buscando la moto más cercana…','Esto puede tardar un momento…'];
 $('req').onclick=()=>{
   if(!trip)return;const b=$('req');b.classList.add('sending');b.innerHTML='<span class="spin"></span>Enviando solicitud…';
   setTimeout(()=>{b.classList.remove('sending');b.textContent='Pedir moto';startSearch()},750);
 };
-function startSearch(){
-  reqId='r'+Date.now();
-  const R={id:reqId,ts:Date.now(),name:user.name,from:me,to:trip.p,label:trip.label,km:trip.km,fare:fare(trip.km),cur:TARIFF[cc].cur,price:priceTxt(trip.km)};
-  store.set('moto_req',R);bc&&bc.postMessage({t:'req',r:R});
-  $('s4k').textContent=trip.km.toFixed(1)+' km';$('s4pr').textContent=R.price;$('s4tm').textContent='0:00';$('s4p').textContent=MSG[0];
-  radar=new maplibregl.Marker({element:mk('<i></i><i></i><i></i>','rdM'),anchor:'center'}).setLngLat([me.lng,me.lat]).addTo(map);
+async function startSearch(){
+  if(!sb||!user)return;
+  const row={passenger_id:user.id,status:'searching',from_lat:me.lat,from_lng:me.lng,to_lat:trip.p.lat,to_lng:trip.p.lng,label:trip.label,km:Math.max(0.01,+trip.km.toFixed(2)),currency:TARIFF[cc].cur,fare:Math.max(0.01,fare(trip.km))};
+  const{data,error}=await sb.from('rides').insert(row).select().single();
+  if(error){
+    if(error.code==='23505'){const a=await myActiveRide();if(a){toast('Ya tenías un viaje activo. Lo retomamos.');resumePassenger(a);return}}
+    toast('No pudimos enviar tu solicitud. Intenta de nuevo.');return;
+  }
+  pRide=data;reqId=data.id;chatMsgs=[];unread=0;
+  subRide(reqId,applyPassengerRide,onDrvLoc);
+  searchUI();
+}
+function searchUI(){
+  stopSearch();
+  const o=me||(pRide?{lat:pRide.from_lat,lng:pRide.from_lng}:null);
+  $('s4k').textContent=(pRide?+pRide.km:0).toFixed(1)+' km';$('s4pr').textContent=pRide?rideTxt(pRide):'';$('s4tm').textContent='0:00';$('s4p').textContent=MSG[0];
+  if(o)radar=new maplibregl.Marker({element:mk('<i></i><i></i><i></i>','rdM'),anchor:'center'}).setLngLat([o.lng,o.lat]).addTo(map);
   const t0=Date.now();sT=setInterval(()=>{const x=Math.floor((Date.now()-t0)/1000);$('s4tm').textContent=Math.floor(x/60)+':'+String(x%60).padStart(2,'0');$('s4p').textContent=MSG[Math.floor(x/6)%MSG.length]},1000);
   sw('s4');
 }
 function stopSearch(){clearInterval(sT);sT=null;if(radar){radar.remove();radar=null}}
-function cancelNow(){stopSearch();store.del('moto_req');bc&&bc.postMessage({t:'cancel',id:reqId});reqId=null;if(drvM){drvM.remove();drvM=null}closeChat();chatMsgs=[]}
+function cancelNow(){
+  const id=reqId;stopSearch();unsubAll();reqId=null;pRide=null;pLegA=pLegB=null;
+  if(id&&sb)sb.rpc('cancel_ride',{p_ride:id}).then(({error})=>{if(error)toast('No pudimos cancelar en el servidor')});
+  if(drvM){drvM.remove();drvM=null}closeChat();chatMsgs=[];
+}
 function cancelTrip(btn){
   if(!btn.dataset.arm){btn.dataset.arm=1;btn.textContent='Toca de nuevo para cancelar';clearTimeout(armT);armT=setTimeout(()=>{delete btn.dataset.arm;btn.textContent='Cancelar viaje'},3000);return}
   delete btn.dataset.arm;clearTimeout(armT);btn.textContent='Cancelar viaje';
-  cancelNow();sw('s3');toast('Viaje cancelado');
+  cancelNow();if(trip)sw('s3');else{clearRoute();sw('s1')}toast('Viaje cancelado');
 }
 $('cancel').onclick=()=>cancelTrip($('cancel'));$('cancel2').onclick=()=>cancelTrip($('cancel2'));
 
@@ -681,7 +849,7 @@ function showPrev(){const p=$('phPrev');p.innerHTML='';if(tmpPhoto){const i=new 
 $('phPick').onclick=()=>$('phIn').click();
 $('phIn').onchange=e=>{const f=e.target.files[0];if(!f)return;const img=new Image(),u=URL.createObjectURL(f);
   img.onload=()=>{const S=320,c=document.createElement('canvas');c.width=c.height=S;const m=Math.min(img.width,img.height);c.getContext('2d').drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S);tmpPhoto=c.toDataURL('image/jpeg',.82);URL.revokeObjectURL(u);showPrev()};img.src=u;e.target.value=''};
-$('phOk').onclick=()=>{user.photo=tmpPhoto;store.set('moto_photo_'+user.id,user.photo);$('photo').style.display='none';applyAvatar();if(phForDriver){phForDriver=false;setMode('d')}};
+$('phOk').onclick=()=>{user.photo=tmpPhoto;store.set('moto_photo_'+user.id,user.photo);delete profCache[user.id];if(sb)sb.from('profiles').upsert({id:user.id,name:user.name,phone:user.phone,email:user.mail,avatar:user.photo}).then(()=>{});$('photo').style.display='none';applyAvatar();if(phForDriver){phForDriver=false;setMode('d')}};
 $('phNo').onclick=()=>{$('photo').style.display='none';phForDriver=false};
 $('av').onclick=()=>{phForDriver=false;document.body.classList.remove('menu');openPhoto()};
 
@@ -728,7 +896,7 @@ function renderReqs(){
     const a=E('div','addr',r.km.toFixed(1)+' km'+(dk?' · Recogida a '+dk:''));a.style.cssText='color:var(--mut);margin:0';
     const a2=E('div','addr','Destino: '+r.label);a2.style.cssText='color:var(--mut);font-weight:500;font-size:13px';
     const row=E('div','chips'),rj=E('button','pill','Rechazar'),rt=E('button','pill','Ver ruta'),ac=E('button','pill','Aceptar');ac.style.cssText='background:var(--red);color:#fff';
-    rj.onclick=()=>{delete pending[id];renderReqs()};rt.onclick=()=>previewReq(r);ac.onclick=()=>acceptReq(r);
+    rj.onclick=()=>{declined.add(id);delete pending[id];renderReqs()};rt.onclick=()=>previewReq(r);ac.onclick=()=>acceptReq(r);
     row.append(rj,rt,ac);c.append(h,a,a2,row);box.appendChild(c)});
   fit();
 }
@@ -739,7 +907,7 @@ async function previewReq(r){
   const row=(l,v,red)=>{const m=E('div','mini');m.style.marginTop='6px';m.append(E('span',null,l),E('span',red?'pr':null,v));if(red)m.lastChild.style.color='var(--red)';return m};
   c.append(E('b',null,'Ruta de '+r.name),row('Hasta el pasajero',p.a?p.kmA.toFixed(1)+' km · '+Math.max(1,Math.round(p.minA))+' min':'—'),row('Pasajero → destino',p.kmB.toFixed(1)+' km · '+Math.max(2,Math.round(p.minB))+' min'),row('Tarifa',r.price+'  (−'+money(com,r.cur)+' comisión)'),row('Tú ganas',money(r.fare-com,r.cur),1));
   const ac=E('button','btn','Aceptar viaje'),ch=E('div','chips'),bk=E('button','pill','← Volver'),rj=E('button','pill','Rechazar');
-  ac.style.marginTop='10px';ac.onclick=()=>acceptReq(r);bk.onclick=closePreview;rj.onclick=()=>{delete pending[r.id];closePreview()};
+  ac.style.marginTop='10px';ac.onclick=()=>acceptReq(r);bk.onclick=closePreview;rj.onclick=()=>{declined.add(r.id);delete pending[r.id];closePreview()};
   ch.append(bk,rj);c.append(ac,ch);box.appendChild(c);fit();fitLegs();
 }
 function closePreview(){previewing=null;prevPlan=null;clearRoute();$('sD').classList.remove('prev');renderReqs()}
@@ -748,13 +916,29 @@ function closePreview(){previewing=null;prevPlan=null;clearRoute();$('sD').class
 $('sD_grab').onclick = () => { if ($('sD').classList.contains('job') && myJob && myJob.phase !== 'pay') $('sD').classList.toggle('minimized'); };
 
 async function acceptReq(r){
-  const p=(previewing&&previewing.id===r.id&&prevPlan)||await plan(r);
-  myJob={...r,phase:'pickup'};delete pending[r.id];store.del('moto_req');chatMsgs=[];unread=0;chatWith={name:r.name};
-  bc&&bc.postMessage({t:'accept',id:r.id,driver:{name:user.name,photo:user.photo},legA:p.a,legB:p.b});
-  previewing=null;prevPlan=null;$('sD').classList.remove('prev');$('sD').classList.add('job');
-  legA=p.a;legB=p.b;drawLegs();legMarkers(r,p);renderJob();fitLegs();driverTick();
-  $('sD').classList.add('minimized');
-  $('navBtn').style.display = 'grid'; // Mostrar botón de nav
+  if(accepting)return;accepting=true;
+  try{
+    const p=(previewing&&previewing.id===r.id&&prevPlan)||await plan(r);
+    const{error}=await sb.rpc('accept_ride',{p_ride:r.id,p_leg_a:p.a,p_leg_b:p.b});
+    if(error){
+      const k=rpcErr(error);delete pending[r.id];
+      if(k==='TAKEN'||k==='GONE')toast('Otro conductor tomó el viaje');
+      else if(k==='DEBT')toast('Límite de deuda alcanzado. Revisa tu billetera.');
+      else toast(error.code==='23505'?'Ya tienes un viaje activo':'No pudimos aceptar el viaje. Intenta de nuevo.');
+      if(previewing&&previewing.id===r.id)closePreview();else renderReqs();
+      return;
+    }
+    myJob={...r,phase:'pickup'};delete pending[r.id];chatMsgs=[];unread=0;chatWith={name:r.name,photo:r.photo};lastPub=0;
+    previewing=null;prevPlan=null;$('sD').classList.remove('prev');$('sD').classList.add('job');
+    legA=p.a;legB=p.b;drawLegs();legMarkers(r,p);renderJob();fitLegs();driverTick();
+    subRide(r.id,driverRideChanged,null);
+    $('sD').classList.add('minimized');
+    $('navBtn').style.display='grid';
+  }finally{accepting=false}
+}
+function driverRideChanged(row){
+  if(!myJob||row.id!==myJob.id)return;
+  if(row.status==='cancelled'){abortJob();toast('El pasajero canceló el viaje')}
 }
 
 function renderJob(){
@@ -777,21 +961,18 @@ function renderJob(){
     const m=E('div','mini');m.style.margin='10px 0';const inf=E('span',null,'Calculando…');inf.id='jInfo';const pr=E('b','pr',j.price);pr.style.color='var(--red)';m.append(inf,pr);
     const nx=E('button','btn',pk?'Recogí al pasajero':'Llegué al destino');nx.id='jNext';nx.style.marginTop='0';
     
-    nx.onclick=()=>{
-      if(myJob.phase==='pickup'){
-        myJob.phase='trip';legA=null;drawLegs();bc&&bc.postMessage({t:'phase',id:j.id,phase:'trip'});renderJob();fitLegs();driverTick();
-        $('sD').classList.add('minimized');
-      } else if(myJob.phase==='trip') {
-        myJob.phase='pay';
-        $('navBtn').style.display='none'; // Ocultar nav
-        renderJob();
-        if(navigator.vibrate)navigator.vibrate(200);
-      }
+    nx.onclick=async()=>{
+      if(nx.disabled)return;nx.disabled=true;
+      const nxt=myJob.phase==='pickup'?'trip':'pay';
+      const{error}=await sb.rpc('set_ride_phase',{p_ride:j.id,p_phase:nxt});
+      if(error){nx.disabled=false;toast(rpcErr(error)==='NA'?'El viaje ya cambió de estado':'No pudimos actualizar el viaje. Intenta de nuevo.');return}
+      if(nxt==='trip'){myJob.phase='trip';legA=null;drawLegs();lastPub=0;renderJob();fitLegs();driverTick();$('sD').classList.add('minimized')}
+      else{myJob.phase='pay';$('navBtn').style.display='none';renderJob();if(navigator.vibrate)navigator.vibrate(200)}
     };
-    
+
     const ch=E('div','chips'),cn=E('button','pill ghost2','Cancelar viaje');
     cn.onclick=()=>{if(!cn.dataset.arm){cn.dataset.arm=1;cn.textContent='Toca de nuevo';setTimeout(()=>{delete cn.dataset.arm;cn.textContent='Cancelar viaje'},3000);return}
-      bc&&bc.postMessage({t:'dcancel',id:j.id});abortJob();toast('Viaje cancelado')};
+      declined.add(j.id);sb.rpc('cancel_ride',{p_ride:j.id}).then(()=>{abortJob();toast('Viaje cancelado')})};
     ch.append(cn);c.append(d,m,nx,ch);
   }
   $('rq').innerHTML='';$('rq').appendChild(c);setBadges();fit();
@@ -804,36 +985,37 @@ function driverTick(){
   if($('jInfo'))$('jInfo').textContent=(j.phase==='pickup'?'Recogida a ':'Destino a ')+kmTxt(d);
   if($('jNext'))$('jNext').classList.toggle('near',d<60);
   if(d<60&&j.nearPh!==j.phase){j.nearPh=j.phase;toast(j.phase==='pickup'?'Llegaste al punto de recogida':'Llegaste al destino');if(navigator.vibrate)navigator.vibrate(300);if(j.phase==='trip'){$('sD').classList.remove('minimized')}}
-  bc&&bc.postMessage({t:'loc',id:j.id,lat:me.lat,lng:me.lng,phase:j.phase,d});
+  publishLoc(j,d);
   if(Date.now()-lastDrag>8000)map.easeTo({center:[me.lng,me.lat],duration:700});
 }
-function abortJob(){myJob=null;clearRoute();$('sD').classList.remove('job','minimized');closeChat();chatMsgs=[];$('rq').innerHTML='';$('navBtn').style.display='none';renderReqs()}
-function finishJob(){
-  const j=myJob,com=rnd(j.fare*.2,j.cur),tr=store.get('moto_trips')||[];
-  tr.push({id:j.id,ts:Date.now(),label:j.label,name:j.name,fare:j.fare,cur:j.cur,com});store.set('moto_trips',tr);
-  bc&&bc.postMessage({t:'done',id:j.id});
-  abortJob();
-  updateChip();
+function abortJob(){
+  myJob=null;unsubAll();clearRoute();$('sD').classList.remove('job','minimized');closeChat();chatMsgs=[];$('rq').innerHTML='';$('navBtn').style.display='none';
+  if(sb&&user)sb.from('driver_locations').delete().eq('driver_id',user.id).then(()=>{});
+  renderReqs();
+}
+async function finishJob(){
+  const j=myJob;if(!j||finishing)return;finishing=true;
+  const{data,error}=await sb.rpc('finish_ride',{p_ride:j.id});
+  finishing=false;
+  if(error){toast('No pudimos cerrar el viaje. Intenta de nuevo.');return}
+  const com=+(data&&data.commission!=null?data.commission:rnd(j.fare*.2,j.cur));
+  tripsCache.push({id:j.id,ts:Date.now(),label:j.label,name:j.name,fare:j.fare,cur:j.cur,com});
+  debt[j.cur]=(debt[j.cur]||0)+com;
+  abortJob();updateChip();
   toast('Viaje completado · Ganaste '+money(j.fare-com,j.cur));
-  
-  // Desconectar si la deuda sobrepasó el límite al terminar
-  const w = weekStats();
-  if (w.com >= 10000 && online) {
-      online = false;
-      $('dp').classList.remove('on');
-      $('dS').textContent = 'Desconectado';
-      $('on').textContent = 'Conectarme';
-      pending = {};
-      $('rq').innerHTML = '';
-      renderReqs();
-      toast('Te hemos desconectado por límite de deuda.');
+  loadFinance();
+  if(debt[j.cur]>=LIMIT[j.cur]&&online){
+    online=false;stopFeed();
+    $('dp').classList.remove('on');$('dS').textContent='Desconectado';$('on').textContent='Conectarme';
+    pending={};$('rq').innerHTML='';renderReqs();
+    toast('Te hemos desconectado por límite de deuda.');
   }
 }
 
 /* ----- Balance y Billetera (Conductor) ----- */
 function weekStart(){const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));d.setHours(0,0,0,0);return d.getTime()}
 function weekStats(){
-  const cur=TARIFF[cc].cur,ws=weekStart(),all=(store.get('moto_trips')||[]).filter(t=>t.ts>=ws&&t.cur===cur);
+  const cur=TARIFF[cc].cur,ws=weekStart(),all=tripsCache.filter(t=>t.ts>=ws&&t.cur===cur);
   const gross=rnd(all.reduce((a,t)=>a+t.fare,0),cur),com=rnd(all.reduce((a,t)=>a+t.com,0),cur);
   return{cur,all,n:all.length,gross,com,net:rnd(gross-com,cur)};
 }
@@ -843,16 +1025,16 @@ function updateChip(){
   else if(best!=null)$('chipT').textContent='Ubicación exacta ±'+Math.round(best)+' m';
 }
 $('chip').onclick=()=>{if(mode==='d')openWallet()};
-function openWallet(){document.body.classList.remove('menu');renderWallet();$('wallet').style.display='flex'}
+function openWallet(){document.body.classList.remove('menu');renderWallet();$('wallet').style.display='flex';loadFinance().then(()=>{if($('wallet').style.display==='flex')renderWallet()})}
 $('wBack').onclick=()=>{$('wallet').style.display='none'};
 $('walletItem').onclick=openWallet;
 function renderWallet(){
   const w=weekStats(),cur=w.cur,ws=weekStart(),fmt=t=>new Date(t).toLocaleDateString('es',{day:'numeric',month:'short'});
   $('wRange').textContent='Semana del '+fmt(ws)+' al '+fmt(ws+6*864e5);
   $('wBig').textContent=money(w.gross,cur);$('wSub').textContent=w.n+(w.n===1?' viaje completado':' viajes completados');
-  $('wCom').textContent=money(w.com,cur);$('wNet').textContent=money(w.net,cur);
+  $('wCom').textContent=money(debtNow(),cur);$('wNet').textContent=money(w.net,cur);
   
-  if (w.com >= 10000) $('wDebtWarn').style.display = 'block';
+  if (debtNow() >= LIMIT[cur]) $('wDebtWarn').style.display = 'block';
   else $('wDebtWarn').style.display = 'none';
 
   const per=Array(7).fill(0);w.all.forEach(t=>per[(new Date(t.ts).getDay()+6)%7]+=t.fare);const mx=Math.max(...per,1),B=$('wBars');B.innerHTML='';
@@ -875,51 +1057,67 @@ function openChat(){
 }
 function closeChat(){chatOpen=false;$('chat').style.display='none'}
 function renderChat(){const M=$('msgs');M.innerHTML='';if(!chatMsgs.length)M.appendChild(E('p','empty','Escribe un mensaje para coordinar la recogida.'));
-  chatMsgs.forEach(m=>{const d=E('div','m '+(m.from===mode?'me':'ot'),m.text);d.appendChild(E('small',null,new Date(m.ts).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})));M.appendChild(d)});M.scrollTop=M.scrollHeight}
-function sendChat(text){const id=chatId();text=(text||'').trim();if(!text||!id)return;const m={t:'chat',id,from:mode,text,ts:Date.now()};chatMsgs.push(m);bc&&bc.postMessage(m);renderChat();$('chIn').value=''}
+  chatMsgs.forEach(m=>{const d=E('div','m '+(m.mine?'me':'ot'),m.text);d.appendChild(E('small',null,new Date(m.ts).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})));M.appendChild(d)});M.scrollTop=M.scrollHeight}
+async function sendChat(text){
+  const id=chatId();text=(text||'').trim();if(!text||!id)return;
+  $('chIn').value='';
+  const{data,error}=await sb.from('messages').insert({ride_id:id,sender_id:user.id,text:text.slice(0,500)}).select().single();
+  if(error){toast('No se pudo enviar el mensaje');$('chIn').value=text;return}
+  onMsg(data);
+}
 $('chSend').onclick=()=>sendChat($('chIn').value);
 $('chIn').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat($('chIn').value)});
 $('chBack').onclick=closeChat;
 document.addEventListener('click',e=>{if(e.target.closest('.chatB'))openChat()});
 
-/* ----- Pasajero: estados en vivo y rutas animadas ----- */
-function onAccepted(m){
-  const d=m.driver;
-  stopSearch();chatMsgs=[];unread=0;chatWith=d;
-  setAv($('s5a'),d.photo,d.name);$('s5n').textContent=d.name;$('s5s').textContent='Va en camino a recogerte';
-  $('s5k').textContent=trip?trip.km.toFixed(1)+' km':'';$('s5pr').textContent=trip?priceTxt(trip.km):'';
-  if(trip){trip.legA=m.legA;trip.legB=m.legB;trip.notifiedArrival=false;}
-  setBadges();
-  sw('s5');if(navigator.vibrate)navigator.vibrate([200,100,200]);
+/* ----- Pasajero: estados en vivo (viene de Supabase) ----- */
+function applyPassengerRide(r){
+  if(!r||r.id!==reqId)return;
+  const prev=pRide;pRide=r;
+  if(r.status==='searching'){
+    if(prev&&prev.driver_id){
+      if(drvM){drvM.remove();drvM=null}closeChat();chatMsgs=[];pLegA=pLegB=null;
+      toast('El conductor canceló. Buscando otra moto…');searchUI();
+    }
+  }else if(r.status==='pickup'||r.status==='trip'||r.status==='pay'){
+    if(!prev||!prev.driver_id)onAccepted(r);
+    else if(prev.status!==r.status){
+      if(r.status==='trip')$('s5s').textContent='En viaje hacia tu destino';
+      if(r.status==='pay')$('s5s').textContent='Llegaste. Paga el viaje en efectivo al conductor';
+    }
+  }else if(r.status==='done'){
+    onDone(r);
+  }
 }
-
+async function onAccepted(r){
+  stopSearch();chatMsgs=[];unread=0;pNotified=false;pLegA=r.leg_a;pLegB=r.leg_b;
+  const d=await getProf(r.driver_id);chatWith=d;
+  setAv($('s5a'),d.photo,d.name);$('s5n').textContent=d.name;
+  $('s5s').textContent=r.status==='trip'?'En viaje hacia tu destino':r.status==='pay'?'Llegaste. Paga el viaje en efectivo al conductor':'Va en camino a recogerte';
+  $('s5k').textContent=(+r.km).toFixed(1)+' km';$('s5pr').textContent=rideTxt(r);
+  setBadges();sw('s5');if(navigator.vibrate)navigator.vibrate([200,100,200]);
+}
+function onDone(r){
+  unsubAll();reqId=null;ratingRide=r.id;pRide=null;
+  if(drvM){drvM.remove();drvM=null}closeChat();chatMsgs=[];
+  $('s6pr').textContent=rideTxt(r);sw('s6');if(navigator.vibrate)navigator.vibrate(300);
+}
 function onDrvLoc(m){
-  const ll=[m.lng,m.lat];
+  const ll=[m.lng,m.lat],d=m.distance==null?1e9:+m.distance;
   if(!drvM)drvM=new maplibregl.Marker({element:mk(MOTO(52),'drvM'),anchor:'center'}).setLngLat(ll).addTo(map);else drvM.setLngLat(ll);
-  
-  if(m.phase==='pickup'){
-    $('s5s').textContent = m.d<50 ? '¡Tu conductor llegó!' : 'Tu conductor está a '+kmTxt(m.d);
-    
-    // Notificación grande cuando llega
-    if (m.d<50 && trip && !trip.notifiedArrival) {
-        trip.notifiedArrival = true;
-        const ic='<svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#D90F2B" stroke-width="2" stroke-linecap="round"><path d="M5 12l5 5L20 7"/></svg>';
-        gate('¡Tu conductor llegó!','Sal al punto de encuentro para iniciar tu viaje.','Entendido', closeGate, ic);
-        if(navigator.vibrate)navigator.vibrate([300,150,300]);
+  if(!pRide)return;
+  if(pRide.status==='pickup'){
+    $('s5s').textContent=d<50?'¡Tu conductor llegó!':'Tu conductor está a '+kmTxt(d);
+    if(d<50&&!pNotified){
+      pNotified=true;
+      const ic='<svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#D90F2B" stroke-width="2" stroke-linecap="round"><path d="M5 12l5 5L20 7"/></svg>';
+      gate('¡Tu conductor llegó!','Sal al punto de encuentro para iniciar tu viaje.','Entendido',closeGate,ic);
+      if(navigator.vibrate)navigator.vibrate([300,150,300]);
     }
-    // Ruta en vivo del conductor hacia mi
-    if(trip && trip.legA) {
-        trip.legA = trim(trip.legA, {lat:m.lat, lng:m.lng});
-        if(trip.legA.length>1) map.getSource('route').setData({type:'Feature',geometry:{type:'LineString',coordinates:trip.legA}});
-    }
-  } else if(m.phase==='trip') {
-    $('s5s').textContent='En viaje · '+kmTxt(m.d)+' al destino';
-    
-    // Ruta en vivo hacia el destino
-    if(trip && trip.legB){
-        trip.legB = trim(trip.legB, {lat:m.lat, lng:m.lng});
-        if(trip.legB.length>1) map.getSource('route').setData({type:'Feature',geometry:{type:'LineString',coordinates:trip.legB}});
-    }
+    if(pLegA){pLegA=trim(pLegA,{lat:m.lat,lng:m.lng});if(pLegA.length>1)map.getSource('route').setData({type:'Feature',geometry:{type:'LineString',coordinates:pLegA}})}
+  }else if(pRide.status==='trip'){
+    $('s5s').textContent='En viaje · '+kmTxt(d)+' al destino';
+    if(pLegB){pLegB=trim(pLegB,{lat:m.lat,lng:m.lng});if(pLegB.length>1)map.getSource('route').setData({type:'Feature',geometry:{type:'LineString',coordinates:pLegB}})}
   }
 }
 
@@ -936,6 +1134,7 @@ document.querySelectorAll('#rateStars span').forEach(s => {
 });
 
 $('s6ok').onclick=()=>{
+  if(ratingRide&&currentRating&&sb)sb.rpc('rate_ride',{p_ride:ratingRide,p_rating:currentRating}).then(()=>{});ratingRide=null;
   clearRoute();dest=null;trip=null;sw('s1');
   if(me)map.flyTo({center:[me.lng,me.lat],zoom:17});
   toast('¡Gracias por tu calificación de ' + currentRating + ' estrellas!');
@@ -944,20 +1143,6 @@ $('s6ok').onclick=()=>{
   $('s6ok').disabled = true;
 };
 
-/* ----- Comunicación ----- */
-if(bc)bc.onmessage=e=>{const m=e.data;
-  if(m.t==='req'&&mode==='d'&&online){pending[m.r.id]=m.r;if(navigator.vibrate)navigator.vibrate(300);renderReqs()}
-  else if(m.t==='cancel'){
-    if(pending[m.id]){delete pending[m.id];toast('El pasajero canceló la solicitud');if(previewing&&previewing.id===m.id)closePreview();else renderReqs()}
-    if(myJob&&myJob.id===m.id){abortJob();toast('El pasajero canceló el viaje')}
-  }
-  else if(m.t==='accept'){if(m.id===reqId)onAccepted(m);else if(pending[m.id]){delete pending[m.id];if(previewing&&previewing.id===m.id){closePreview();toast('Otro conductor tomó el viaje')}else renderReqs()}}
-  else if(m.t==='loc'&&m.id===reqId)onDrvLoc(m);
-  else if(m.t==='phase'&&m.id===reqId){$('s5s').textContent='En viaje hacia tu destino'}
-  else if(m.t==='dcancel'&&m.id===reqId){if(drvM){drvM.remove();drvM=null}closeChat();toast('El conductor canceló. Buscando otra moto…');startSearch()}
-  else if(m.t==='done'&&m.id===reqId){reqId=null;if(drvM){drvM.remove();drvM=null}closeChat();chatMsgs=[];$('s6pr').textContent=trip?priceTxt(trip.km):'';sw('s6');if(navigator.vibrate)navigator.vibrate(300)}
-  else if(m.t==='chat'&&m.id===chatId()&&m.from!==mode){chatMsgs.push(m);if(chatOpen)renderChat();else{unread++;setBadges();toast('💬 '+m.text.slice(0,40));if(navigator.vibrate)navigator.vibrate(150)}}
-};
 function sw(id){['s1','s2','s3','s4','s5','s6'].forEach(s=>$(s).style.display=s===id?'block':'none');fit()}
 
 /* ---------- Menú y Cambios de Modo ---------- */
@@ -972,7 +1157,7 @@ function setMode(m){
   if(d){
     sw('s1');renderReqs();
   } else {
-    online=false;pending={};previewing=null;
+    online=false;stopFeed();pending={};previewing=null;
     $('sD').classList.remove('prev','job','minimized');
     $('rq').innerHTML='';$('dp').classList.remove('on');$('dS').textContent='Desconectado';$('on').textContent='Conectarme';
     $('dI').textContent='Conéctate para recibir viajes cerca de ti.';
@@ -993,17 +1178,18 @@ $('swBtn').onclick=()=>{
     setMode('p');
   }
 };
-$('on').onclick=()=>{
-  if(!online && weekStats().com >= 10000) {
-      toast('Límite de deuda alcanzado. Revisa tu billetera.');
-      return;
+$('on').onclick=async()=>{
+  if(!online){
+    await loadFinance();
+    if(debtNow()>=LIMIT[TARIFF[cc].cur]){toast('Límite de deuda alcanzado. Revisa tu billetera.');return}
   }
   online=!online;$('dp').classList.toggle('on',online);$('dS').textContent=online?'Conectado':'Desconectado';$('on').textContent=online?'Desconectarme':'Conectarme';
-  pending={};if(online){const r=store.get('moto_req');if(r&&Date.now()-r.ts<600000)pending[r.id]=r}
-  $('rq').innerHTML='';renderReqs();
+  pending={};$('rq').innerHTML='';
+  if(online)startFeed();else stopFeed();
+  renderReqs();
 };
 $('prof').onclick=()=>{toast(user.name+' · '+user.phone);document.body.classList.remove('menu')};
-$('out').onclick=async()=>{try{if(sb)await sb.auth.signOut()}catch(e){}user=null;location.reload()};
+$('out').onclick=async()=>{stopFeed();unsubAll();try{if(sb)await sb.auth.signOut()}catch(e){}user=null;location.reload()};
 
 function toast(m){const e=$('toast');e.textContent=m;e.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>e.style.display='none',3500)}
 function fit(){requestAnimationFrame(()=>{const s=mode==='p'?$('sP'):$('sD');document.documentElement.style.setProperty('--sh',s.offsetHeight+'px')})}
