@@ -613,6 +613,7 @@ body.menu .dBody>*:nth-child(3){animation-delay:.2s}body.menu .dBody>*:nth-child
   <div class="gi" id="gIc"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--red)" stroke-width="2" stroke-linecap="round"><path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/></svg></div>
   <h2 id="gT">Activa tu ubicación</h2><p id="gP">Necesitamos tu ubicación precisa para conectarte con el mejor viaje.</p>
   <button class="btn" id="gB">Activar ubicación</button>
+  <button class="btn ghost" id="gB2" style="display:none">Ahora no</button>
 </div>
 
 <div class="full gate" id="photo" style="z-index:2100">
@@ -858,8 +859,15 @@ let penDebt={COP:0,USD:0},pens=[];
 const debtOf=cur=>(debt[cur]||0)+(penDebt[cur]||0);
 const debtNow=()=>debtOf(TARIFF[cc].cur);
 const fnMissing=e=>!!e&&(e.code==='PGRST202'||/could not find the function|schema cache/i.test(e.message||''));
-const rpcErr=e=>{const m=(e&&e.message)||'';if(/RIDE_TAKEN/.test(m))return'TAKEN';if(/DEBT_LIMIT/.test(m))return'DEBT';if(/RIDE_NOT_FOUND/.test(m))return'GONE';if(/NOT_ALLOWED|INVALID_TRANSITION/.test(m))return'NA';return'ERR'};
+const rpcErr=e=>{const m=(e&&e.message)||'';if(/USER_BLOCKED/.test(m))return'BLOCKED';if(/RIDE_TAKEN/.test(m))return'TAKEN';if(/DEBT_LIMIT/.test(m))return'DEBT';if(/RIDE_NOT_FOUND/.test(m))return'GONE';if(/NOT_ALLOWED|INVALID_TRANSITION/.test(m))return'NA';return'ERR'};
 
+/* Cuenta bloqueada por el administrador: aviso y cierre de sesión */
+async function blockedOut(reason){
+  stopFeed();unsubAll();stopSupport();
+  try{if(sb)await sb.auth.signOut()}catch(e){}
+  user=null;$('reg').style.display='none';
+  gate('Cuenta bloqueada',reason?('Motivo: '+reason+'. Contacta a soporte.'):'Tu cuenta fue bloqueada. Contacta a soporte.','Contactar soporte',()=>window.open('https://wa.me/573102722613','_blank'));
+}
 async function getProf(id){
   if(profCache[id])return profCache[id];
   try{
@@ -871,7 +879,8 @@ async function getProf(id){
 async function syncProfile(){
   if(!sb||!user)return;
   try{
-    const{data}=await sb.from('profiles').select('name,phone,avatar').eq('id',user.id).maybeSingle();
+    const{data}=await sb.from('profiles').select('name,phone,avatar,blocked,blocked_reason').eq('id',user.id).maybeSingle();
+    if(data&&data.blocked){await blockedOut(data.blocked_reason);return}
     if(data){
       if(data.avatar&&data.avatar!==user.photo){user.photo=data.avatar;store.set('moto_photo_'+user.id,user.photo);applyAvatar()}
       else if(!data.avatar&&user.photo)await sb.from('profiles').update({avatar:user.photo}).eq('id',user.id);
@@ -1057,7 +1066,7 @@ function initMap(){
 const circle=(c,r)=>{const pts=[],dLat=r/111320,dLng=r/(111320*Math.cos(c.lat*Math.PI/180));for(let i=0;i<=64;i++){const a=i/64*2*Math.PI;pts.push([c.lng+dLng*Math.cos(a),c.lat+dLat*Math.sin(a)])}return{type:'Feature',geometry:{type:'Polygon',coordinates:[pts]}}};
 
 /* ---------- Ubicación ---------- */
-function gate(t,p,b,fn,ic){$('gT').textContent=t;$('gP').textContent=p;$('gate').style.display='flex';const btn=$('gB');btn.style.display=b?'block':'none';if(b)btn.textContent=b;btn.onclick=fn||null;if(ic)$('gIc').innerHTML=ic;}
+function gate(t,p,b,fn,ic){$('gB2').style.display='none';$('gT').textContent=t;$('gP').textContent=p;$('gate').style.display='flex';const btn=$('gB');btn.style.display=b?'block':'none';if(b)btn.textContent=b;btn.onclick=fn||null;if(ic)$('gIc').innerHTML=ic;}
 function closeGate(){$('gate').style.display='none';$('gIc').innerHTML='<svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#D90F2B" stroke-width="1.8" stroke-linecap="round"><path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/></svg>';}
 async function after(){
   await mapReady;$('reg').style.display='none';
@@ -1271,6 +1280,7 @@ async function startSearch(){
   const row={passenger_id:user.id,status:'searching',from_lat:me.lat,from_lng:me.lng,to_lat:trip.p.lat,to_lng:trip.p.lng,label:trip.label,km:Math.max(0.01,+trip.km.toFixed(2)),currency:TARIFF[cc].cur,fare:Math.max(0.01,curFare())};
   const{data,error}=await sb.from('rides').insert(row).select().single();
   if(error){
+    if(/USER_BLOCKED/.test(error.message||'')){await blockedOut();return}
     if(error.code==='23505'){const a=await myActiveRide();if(a){toast('Ya tenías un viaje activo. Lo retomamos.');resumePassenger(a);return}}
     toast('No pudimos enviar tu solicitud. Intenta de nuevo.');return;
   }
@@ -1429,6 +1439,7 @@ async function acceptReq(r){
     const{error}=await sb.rpc('accept_ride',{p_ride:r.id,p_leg_a:p.a,p_leg_b:p.b});
     if(error){
       const k=rpcErr(error);delete pending[r.id];
+      if(k==='BLOCKED'){await blockedOut();return}
       if(k==='TAKEN'||k==='GONE')toast('Otro conductor tomó el viaje');
       else if(k==='DEBT')toast('Límite de deuda alcanzado. Revisa tu billetera.');
       else toast(error.code==='23505'?'Ya tienes un viaje activo':'No pudimos aceptar el viaje. Intenta de nuevo.');
@@ -1838,11 +1849,42 @@ function setMode(m){
   setMeIcon();updateChip();clearTimeout(chipT);clearTimeout(chipT2);$('chip').style.opacity='1';$('chip').style.display=d?'flex':'none';
   document.body.classList.remove('menu');fit();
 }
-$('swBtn').onclick=()=>{
+/* ---------- Socio conductor: ¿está registrado y aprobado? ---------- */
+const SOCIOS_URL='socios.html';
+async function driverAccess(){
+  if(!sb||!user||isAdmin)return true;
+  try{
+    const[pr,ap]=await Promise.all([
+      sb.from('profiles').select('driver_approved').eq('id',user.id).maybeSingle(),
+      sb.from('driver_applications').select('status,reject_reason').eq('user_id',user.id).maybeSingle()
+    ]);
+    /* si el sistema de socios aún no está instalado o no hay conexión, no estorba */
+    if(pr.error||ap.error)return true;
+    if((pr.data&&pr.data.driver_approved)||(ap.data&&ap.data.status==='approved'))return true;
+    const go=()=>{closeGate();window.open(SOCIOS_URL,'_blank')};
+    const icon=e=>'<span style="font-size:58px;line-height:1">'+e+'</span>';
+    const st=ap.data&&ap.data.status;
+    if(st==='pending'){
+      gate('Solicitud en revisión','Ya recibimos tus documentos. Te avisaremos aquí mismo cuando tu perfil sea aceptado o rechazado.','Entendido',closeGate,icon('⏳'));
+    }else if(st==='rejected'){
+      gate('Tu solicitud fue rechazada','Motivo: '+(ap.data.reject_reason||'sin motivo indicado')+'. Corrígelo y vuelve a enviarla.','Corregir solicitud',go,icon('❌'));
+      const b2=$('gB2');b2.style.display='block';b2.onclick=closeGate;
+    }else{
+      gate('Conviértete en socio conductor','Para manejar con nosotros primero debes registrarte y subir tus documentos. Revisamos tu perfil y te avisamos aquí.','Registrarme como socio',go,icon('🏍️'));
+      const b2=$('gB2');b2.style.display='block';b2.onclick=closeGate;
+    }
+    return false;
+  }catch(e){return true}
+}
+let swBusy=false;
+$('swBtn').onclick=async()=>{
   document.body.classList.remove('menu');
   if(mode==='p'){
     if(reqId){toast('Cancela tu viaje antes de cambiar de modo');return}
-    if(!user.photo){phForDriver=true;openPhoto();return} 
+    if(swBusy)return;
+    swBusy=true;const ok=await driverAccess();swBusy=false;
+    if(!ok)return;
+    if(!user.photo){phForDriver=true;openPhoto();return}
     setMode('d');
   }else{
     if(myJob){toast('Termina o cancela tu viaje actual primero');return}
